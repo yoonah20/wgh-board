@@ -61,7 +61,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .notice { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--accent-soft); color: var(--ink); font-size: 13px;
   padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .notice[hidden] { display: none; }
-body.login-mode .side, body.login-mode .tb-center, body.login-mode .tb-right > :not(#themeBtn) { display: none !important; }
+body.login-mode .side, body.login-mode .tb-center, body.login-mode .tb-right > * { display: none !important; }
 body.login-mode .layout { grid-template-columns: 1fr; }
 .login form { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin: 14px 0 6px; }
 .login form[hidden] { display: none; }
@@ -291,6 +291,17 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
 .thumb { position: relative; }
 .thumb-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
 #wmBtn.on { border-color: var(--accent); color: var(--accent); }
+.pair .sheet { cursor: zoom-in; }
+.pair.deck.pan .sheet { cursor: grab; }
+.viewer { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 38; background: rgba(40,40,44,.92); overflow-y: auto; overflow-x: hidden; }
+.viewer .vbar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: rgba(28,28,30,.96); color: #eee; font-size: 14px; }
+.viewer .vbar .spacer { flex: 1; }
+.viewer .vbar .btn { background: #fff; color: #111; }
+.viewer .vpages { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 20px 0 60px; min-height: calc(100% - 44px); }
+.viewer .vpage { position: relative; flex: none; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+.viewer .vpage .sheet { position: absolute; top: 0; left: 0; margin: 0; transform-origin: 0 0; cursor: auto; }
+body.viewer-open { overflow: hidden; }
+@media print { .viewer { display: none !important; } }
 .heart { border: 1px solid var(--chrome-line); background: var(--panel); color: var(--ink-2); border-radius: 99px; font-size: 12px; line-height: 1; padding: 3px 8px; cursor: pointer; min-width: 44px; }
 .heart:hover { border-color: #e0457b; color: #e0457b; }
 .heart.on { color: #e0457b; border-color: #f2a8c2; background: #fff0f5; }
@@ -366,7 +377,6 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
     </div>
   </details>
   <button class="btn icon" id="printBtn" title="인쇄 · PDF 저장 (지금 보는 지원자 / 현재 목록 전체)" aria-label="인쇄 · PDF 저장" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg></button>
-  <button class="btn icon" id="themeBtn" title="화면 모드" aria-label="화면 모드"></button>
   <button class="btn icon" id="reloadBtn" title="데이터 다시 불러오기 (CSV)" aria-label="데이터 다시 불러오기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
   </div>
 </div>
@@ -1240,7 +1250,43 @@ function renderMain(gs) {
 }
 
 // 스크롤 위치를 지키며 다시 그림 (넘겨 둔 쪽 위치는 deckPos에 남아 있음)
-function rerender() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+function rerender() {
+  const vk = viewerKey; if (vk) closeViewer();
+  const y = window.scrollY; render(); window.scrollTo(0, y);
+  if (vk) openViewer(vk);
+}
+// ===================== 지원서 크게 보기 (PDF 뷰어처럼 화면 폭에 맞춰 세로로) =====================
+// 같은 종이를 옮겨 와서 보여 주므로 메모·체크·승인 등은 그대로 동작. 닫으면 제자리로 돌려놓음
+let viewerKey = null, viewerScroll = {};
+function openViewer(key) {
+  const pair = document.getElementById('s-' + key); if (!pair) return;
+  closeViewer(); viewerKey = key;
+  const a = DATA.list.find(x => x.key === key);
+  const sheets = [...pair.querySelectorAll('.sheet')];
+  const ov = document.createElement('div'); ov.className = 'viewer'; ov.id = 'viewer';
+  ov.innerHTML = `<div class="vbar"><b>${esc(a ? a.no + ' · ' + a.name : '')}</b><span>${sheets.length}쪽</span><span class="spacer"></span>
+    <button class="btn" data-vclose title="닫기 (Esc)">닫기 ✕</button></div><div class="vpages"></div>`;
+  $('#main').appendChild(ov);
+  document.body.classList.add('viewer-open');
+  const MM = 96 / 25.4, W = 210 * MM, H = 297 * MM;
+  const vp = ov.querySelector('.vpages');
+  const z = Math.max(0.6, Math.min(2.4, (vp.clientWidth - 64) / W));
+  sheets.forEach(sh => {
+    const w = document.createElement('div'); w.className = 'vpage';
+    w.style.width = `${W * z}px`; w.style.height = `${H * z}px`;
+    sh.style.transform = `scale(${z})`; w.appendChild(sh); vp.appendChild(w);
+  });
+  ov.scrollTop = viewerScroll[key] || 0;
+  ov.addEventListener('scroll', () => { viewerScroll[key] = ov.scrollTop; });
+}
+function closeViewer() {
+  const ov = document.getElementById('viewer'); if (!ov) return;
+  const pair = document.getElementById('s-' + viewerKey);
+  if (pair) { const sp = pair.querySelector('.deck-spacer'); ov.querySelectorAll('.sheet').forEach(sh => pair.insertBefore(sh, sp)); }
+  ov.remove(); viewerKey = null; document.body.classList.remove('viewer-open');
+  if (pair) setupDeck(pair);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && viewerKey && $('#cropModal').hidden) closeViewer(); });
 function render() {
   if (!DATA) return renderEmpty();
   $('#groupSel').value = groupBy;
@@ -1396,6 +1442,7 @@ $('#noticeLoad').onclick = () => $('#reloadBtn').click();
 try { $('#printBtn').hidden = !WEB && window.self !== window.top; } catch { $('#printBtn').hidden = !WEB; }
 // 인쇄: 한 사람만 또는 현재 목록 전체
 function printPeople(key) {
+  if (viewerKey) closeViewer();
   document.querySelectorAll('.pair.print-target').forEach(p => p.classList.remove('print-target'));
   document.querySelectorAll('.sheet.last-print').forEach(s => s.classList.remove('last-print'));
   let scope = document;
@@ -1437,20 +1484,12 @@ document.addEventListener('error', e => { if (e.target.tagName === 'IMG' && !e.t
 $('#q').oninput = render;
 // 필터 팝오버: 바깥을 누르면 닫힘
 document.addEventListener('click', e => { const f = document.getElementById('filters'); if (f && f.open && !e.target.closest('#filters')) f.open = false; });
-// 화면 모드: 자동(시스템 설정) / 일반 / 다크
-const THEMES = { auto: ['<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>', '화면 모드: 자동 (시스템 설정 따름)'], light: ['<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>', '화면 모드: 일반'], dark: ['<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>', '화면 모드: 다크'] };
-let theme = store.get('theme', 'auto');
-function applyTheme(t) {
-  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
-  const [icon, label] = THEMES[t] || THEMES.auto;
-  $('#themeBtn').innerHTML = icon; $('#themeBtn').title = label + ' — 눌러서 바꾸기'; $('#themeBtn').setAttribute('aria-label', label);
-}
-applyTheme(theme);
-$('#themeBtn').onclick = () => { const order = ['auto', 'light', 'dark']; theme = order[(order.indexOf(theme) + 1) % 3]; store.set('theme', theme); applyTheme(theme); };
+// 화면 모드는 항상 라이트 (컴퓨터가 다크 모드여도)
+document.documentElement.dataset.theme = 'light'; document.documentElement.style.colorScheme = 'light'; store.set('theme', 'light');
 let deckT; window.addEventListener('resize', () => { clearTimeout(deckT); deckT = setTimeout(() => document.querySelectorAll('.pair').forEach(setupDeck), 150); });
 // 키보드 ← → : 화면에 가장 많이 보이는 지원자의 쪽 넘기기
 document.addEventListener('keydown', e => {
-  if (!['ArrowLeft', 'ArrowRight'].includes(e.key) || e.target.closest('input, textarea, [contenteditable="true"]') || !$('#cropModal').hidden) return;
+  if (!['ArrowLeft', 'ArrowRight'].includes(e.key) || viewerKey || e.target.closest('input, textarea, [contenteditable="true"]') || !$('#cropModal').hidden) return;
   const pairs = [...document.querySelectorAll('.pair.deck')];
   const vis = p => { const r = p.getBoundingClientRect(); return Math.min(r.bottom, innerHeight) - Math.max(r.top, 0); };
   const best = pairs.sort((x, y) => vis(y) - vis(x))[0];
@@ -1481,6 +1520,11 @@ $('#side').onclick = e => {
   if (gh) { const t = document.querySelectorAll('.grp-title')[+gh.dataset.gi]; if (t) t.scrollIntoView({ behavior: 'smooth' }); }
 };
 $('#main').addEventListener('click', e => {
+  if (e.target.closest('[data-vclose]') || e.target.id === 'viewer' || e.target.classList.contains('vpages')) { closeViewer(); return; }
+  const sh = e.target.closest('.pair .sheet');
+  if (sh && !viewerKey && !e.target.closest('a, button, input, textarea, label, select, [data-act], [data-rep], [data-crop], [data-sign], [data-deck]')) {
+    openViewer(sh.closest('.pair').dataset.key); return;
+  }
   const db = e.target.closest('[data-deck]');
   if (db) { moveDeck(db.closest('.pair'), +db.dataset.deck); return; }
   const rb = e.target.closest('[data-rep]');
@@ -1617,7 +1661,7 @@ if (WEB) {
   // 10분마다 시트를 다시 수집 (새 지원자 반영). 메모 입력 중이거나 창이 안 보이면 건너뜀
   setInterval(() => {
     const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches('textarea, input');
-    if (SESSION && !document.hidden && !typing && $('#cropModal').hidden) webLoad(false);
+    if (SESSION && !document.hidden && !typing && $('#cropModal').hidden && !viewerKey) webLoad(false);
   }, 10 * 60 * 1000);
   if (document.getElementById('wmBtn')) $('#wmBtn').onclick = () => {
     SETTINGS = { ...SETTINGS, watermark: wmOn() ? '0' : '1' }; updateWatermark();
