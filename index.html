@@ -827,9 +827,11 @@ function visibleList() {
 }
 // 학교별 묶음에서 맨 위에 둘 주요 학교 (이 순서대로)
 const MAIN_SCHOOLS = ['서울공연예술고등학교', '한림연예예술고등학교', '선화예술고등학교', '계원예술고등학교', '리라아트고등학교', '국립전통예술고등학교', '안양예술고등학교'];
-// 학교별 묶음 기준: 중학생은 진학 예정 고등학교로
+// 학교별 묶음 기준: 재학생은 재학 학교, 입학 예정자(중학생)는 맨 아래에 '[입학 예정] 진학 예정 학교'로 따로
+const INCOMING = '[입학 예정] ';
+const isIncoming = a => /중학교|중$/.test(norm(a.school)) || a.gradeN === '중3 (2027 입학 예정)';
 const groupSchool = a => {
-  if (/중학교|중$/.test(norm(a.school)) && /고등학교|고$|예고/.test(norm(a.nextSchool))) return canonSchool(a.nextSchool);
+  if (isIncoming(a)) return INCOMING + (/고등학교|고$|예고/.test(norm(a.nextSchool)) ? canonSchool(a.nextSchool) : '진학 학교 미기재');
   return canonSchool(a.school) || '학교 미기재';
 };
 const likeCount = a => Object.keys(likes[a.key] || {}).length;
@@ -847,8 +849,9 @@ function groups(list) {
   if (groupBy === 'date') arr.sort((x, y) => y[0].localeCompare(x[0]));            // 최신 날짜 먼저
   else if (groupBy === 'grade') arr.sort((x, y) => { const i = k => { const n = GRADE_ORDER.indexOf(k); return n < 0 ? 99 : n; }; return i(x[0]) - i(y[0]); });
   else {   // 학교별: 주요 학교 먼저(정한 순서), 나머지는 인원 많은 순
-    const rank = k => { const i = MAIN_SCHOOLS.indexOf(k); return i < 0 ? 99 : i; };
-    arr.sort((x, y) => rank(x[0]) - rank(y[0]) || y[1].items.length - x[1].items.length || x[0].localeCompare(y[0], 'ko'));
+    const inc = k => k.startsWith(INCOMING) ? 1 : 0;   // 입학 예정 묶음은 맨 아래
+    const rank = k => { const i = MAIN_SCHOOLS.indexOf(k.replace(INCOMING, '')); return i < 0 ? 99 : i; };
+    arr.sort((x, y) => inc(x[0]) - inc(y[0]) || rank(x[0]) - rank(y[0]) || y[1].items.length - x[1].items.length || x[0].localeCompare(y[0], 'ko'));
   }
   return arr.map(([, v]) => v);
 }
