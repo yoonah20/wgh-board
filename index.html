@@ -967,7 +967,7 @@ function sheetHtml(a) {
       ${snsVal ? `<tr>${row('SNS', snsVal, 3)}</tr>` : ''}
     </table>`),
     ...p1.map(e => qBlk(shortLabel(e.h), e.v)),
-    sec(`사진 (${photos.length}장)<span class="hint no-print"> — 누르면 원본, '대표로'를 누르면 대표 사진으로</span>`),
+    sec(`사진 (${photos.length}장)`),
     ...(photoRows.length ? photoRows : [blk('<div class="note">사진 없음</div>')]),
     ...(reasons ? [blk(reasons)] : []),
     sec('경력 · 자기소개', true),
