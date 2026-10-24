@@ -103,7 +103,7 @@ body::before { background: var(--chrome) !important; }
 .tb-left { overflow: hidden; }
 .tb-left .stat { overflow: hidden; text-overflow: ellipsis; }
 .tb-right { justify-content: flex-end; flex-wrap: wrap; }
-@media (max-width: 1400px) { .topbar { display: flex; } .tb-center { order: 3; width: 100%; justify-content: center; } .tb-right { margin-left: auto; } }
+@media screen and (max-width: 1400px) { .topbar { display: flex; } .tb-center { order: 3; width: 100%; justify-content: center; } .tb-right { margin-left: auto; } }
 input[type=search] { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 180px; background: var(--panel); }
 label.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; white-space: nowrap; cursor: pointer; }
 
@@ -285,7 +285,7 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
 .mfoot input[type=range] { flex: 1; min-width: 80px; }
 @media print { .pair { display: block; margin: 0; } }
 
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
   .side { position: static; max-height: 40vh; border-right: 0; border-bottom: 1px solid var(--line); }
   .grp-title { width: auto; }
@@ -303,7 +303,14 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
   .main { padding: 0; overflow: visible; }
   .sheet { box-shadow: none; margin: 0; page-break-after: always; break-after: page; }
   .sheet table, .files { break-inside: avoid; }
-  .memo textarea { border-style: dashed; }
+  /* 인쇄도 화면과 똑같이: 고정 상단바 자리 여백·그림자 없애고, 한 장 = A4 한 쪽 */
+  html, body { padding: 0 !important; margin: 0 !important; background: #fff !important; }
+  body::before, body::after { display: none !important; }
+  .pair, .pair.deck { width: auto !important; height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+  .sheet, .pair.deck .sheet { position: static !important; transform: none !important; box-shadow: none !important; margin: 0 !important;
+    width: 210mm !important; height: 297mm !important; break-inside: avoid; page-break-inside: avoid; }
+  .sheet { page-break-after: always; break-after: page; }
+  .sheet.last-print { page-break-after: auto; break-after: auto; }   /* 맨 끝 빈 쪽 방지 */
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
@@ -1228,9 +1235,18 @@ try { $('#printBtn').hidden = !WEB && window.self !== window.top; } catch { $('#
 // 인쇄: 한 사람만 또는 현재 목록 전체
 function printPeople(key) {
   document.querySelectorAll('.pair.print-target').forEach(p => p.classList.remove('print-target'));
-  if (key) { const el = document.getElementById('s-' + key); if (!el) return; el.classList.add('print-target'); document.body.classList.add('print-one'); }
+  document.querySelectorAll('.sheet.last-print').forEach(s => s.classList.remove('last-print'));
+  let scope = document;
+  if (key) { const el = document.getElementById('s-' + key); if (!el) return; el.classList.add('print-target'); document.body.classList.add('print-one'); scope = el; }
   else document.body.classList.remove('print-one');
-  setTimeout(() => window.print(), 50);
+  const sheets = scope.querySelectorAll('.sheet'); if (sheets.length) sheets[sheets.length - 1].classList.add('last-print');
+  // 화면에 아직 안 나온 사진·영상 썸네일까지 모두 불러온 뒤 인쇄 (안 그러면 빈 칸으로 인쇄됨)
+  const ids = WEB ? [...new Set([...scope.querySelectorAll('img[data-thumb]')].map(i => i.dataset.thumb).filter(id => !IMG[id]))] : [];
+  if (!ids.length) { setTimeout(() => window.print(), 50); return; }
+  let done = 0;
+  setSyncStat(`인쇄 준비 중… 사진 0/${ids.length}`);
+  Promise.all(ids.map(id => loadThumb(id).then(() => setSyncStat(`인쇄 준비 중… 사진 ${++done}/${ids.length}`))))
+    .then(() => { setSyncStat(`공유됨 · ${hhmm()}`); setTimeout(() => window.print(), 300); });
 }
 window.addEventListener('afterprint', () => { document.body.classList.remove('print-one'); document.querySelectorAll('.pair.print-target').forEach(p => p.classList.remove('print-target')); });
 // 화면에 가장 크게 보이는 지원자
