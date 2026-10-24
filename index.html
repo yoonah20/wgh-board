@@ -251,6 +251,12 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
 .blk.end .memo { flex: 1; display: flex; flex-direction: column; min-height: 30mm; }
 .blk.end .memo textarea { flex: 1; resize: none; min-height: 20mm; }
 .paginating .sheet .body > .blk.end { flex: none; margin-top: 0; }
+/* 인쇄에서는 화면 조작용 표시(대표·자르기·검토 상자·안내 문구) 빼기 */
+@media print {
+  .sheet .flags, .blk:has(> .flags) { display: none !important; }
+  .file.photo.rep { outline: none !important; }
+  .memo textarea::placeholder { color: transparent !important; }
+}
 .sign label { border: 1px solid var(--paper-line); width: 24mm; height: 18mm; position: relative; cursor: pointer; display: block; text-align: center; padding-top: 2px; }
 .sign label:hover { background: #f5f7ff; }
 .sign input { position: absolute; opacity: 0; pointer-events: none; }
@@ -904,12 +910,12 @@ const shortLabel = h => (SHORT_LABELS.find(([re]) => re.test(h)) || [0, norm(h).
 function photoCard(f, cap, isRep) {
   return `<div class="file photo${isRep ? ' rep' : ''}">
     <a class="fimg" href="${viewUrl(f.id)}" target="_blank" rel="noopener" title="원본 열기"><span>사진</span><img src="${imgSrc(f.id)}" data-thumb="${esc(f.id)}" alt="" loading="lazy"></a>
-    <div class="fcap"><span>${esc(cap)}</span>${isRep ? '<span><b class="rep-on">★ 대표</b> <button class="rep-btn no-print" data-crop>자르기</button></span>' : `<button class="rep-btn no-print" data-rep="${esc(f.id)}">대표로</button>`}</div></div>`;
+    <div class="fcap"><span>${esc(cap)}</span>${isRep ? '<span class="no-print"><b class="rep-on">★ 대표</b> <button class="rep-btn" data-crop>자르기</button></span>' : `<button class="rep-btn no-print" data-rep="${esc(f.id)}">대표로</button>`}</div></div>`;
 }
 function fileCard(f, cap) {
   return `<a class="file ${f.kind}" href="${viewUrl(f.id)}" target="_blank" rel="noopener">
     <div class="fimg"><span>${f.kind === 'video' ? '▶' : f.kind === 'photo' ? '사진' : '📎'}</span><img src="${imgSrc(f.id)}" data-thumb="${esc(f.id)}" alt="" loading="lazy"></div>
-    <div class="fcap"><span>${esc(cap)}</span><span>열기 ↗</span></div></a>`;
+    <div class="fcap"><span>${esc(cap)}</span><span class="no-print">열기 ↗</span></div></a>`;
 }
 function sheetHtml(a) {
   const hidden = isHidden(a);
@@ -961,12 +967,12 @@ function sheetHtml(a) {
       ${snsVal ? `<tr>${row('SNS', snsVal, 3)}</tr>` : ''}
     </table>`),
     ...p1.map(e => qBlk(shortLabel(e.h), e.v)),
-    sec(`사진 (${photos.length}장) — 누르면 원본, '대표로'를 누르면 대표 사진으로`),
+    sec(`사진 (${photos.length}장)<span class="hint no-print"> — 누르면 원본, '대표로'를 누르면 대표 사진으로</span>`),
     ...(photoRows.length ? photoRows : [blk('<div class="note">사진 없음</div>')]),
     ...(reasons ? [blk(reasons)] : []),
     sec('경력 · 자기소개', true),
     ...p2.map(e => qBlk(shortLabel(e.h), e.v)),
-    blk(`<div class="sec">지원 영상 — 누르면 드라이브에서 재생됩니다</div>`, 'sec-blk vid-sec'),
+    blk(`<div class="sec">지원 영상<span class="hint no-print"> — 누르면 드라이브에서 재생됩니다</span></div>`, 'sec-blk vid-sec'),
     blk(`<div class="vhead"><b>노래</b> · ${esc(song(/노래/)) || '곡명 미기재'}${sing.length ? '' : ' (영상 없음)'}<br><b>댄스</b> · ${esc(song(/댄스/)) || '곡명 미기재'}${dance.length ? '' : ' (영상 없음)'}</div>
       <div class="files videos">${[...sing.map((f, i) => fileCard(f, `노래${sing.length > 1 ? ' ' + (i + 1) : ''}`)), ...dance.map((f, i) => fileCard(f, `댄스${dance.length > 1 ? ' ' + (i + 1) : ''}`))].join('')}</div>`),
     ...(etc.length ? [blk(`<div class="files">${etc.map(f => fileCard(f, f.label.slice(0, 12))).join('')}</div>`)] : []),
