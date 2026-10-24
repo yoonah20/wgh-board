@@ -851,13 +851,11 @@ function buildApplicants(rows) {
   // 같은 사람이 여러 번 낸 지원서는 따로 다루도록 두 번째부터 키에 순번을 붙임 (먼저 낸 것은 예전 키 그대로)
   const keyCount = {};
   out.forEach(a => { const n = keyCount[a.key] = (keyCount[a.key] || 0) + 1; if (n > 1) a.key += '#' + n; });
-  // 스태프 번호가 마지막으로 매겨진 행 이후의 새 지원자는 번호를 이어서 자동 부여(22, 23…).
-  // 그 앞에서 비어 있는 행은 스태프가 일부러 비워 둔 것(중복·제외)으로 보고 번호를 주지 않음.
-  const byRow = [...out].sort((x, y) => x.row - y.row);
-  const lastStaffRow = Math.max(0, ...byRow.filter(a => a.appNo != null).map(a => a.row));
-  let next = Math.max(0, ...byRow.map(a => a.appNo || 0));
-  byRow.forEach(a => { if (a.appNo == null && a.row > lastStaffRow) { a.appNo = ++next; a.autoNo = true; } });
-  out.forEach((a, i) => { a.seq = i + 1; a.no = a.appNo != null ? String(a.appNo).padStart(3, '0') : '없음'; });
+  // 지원번호는 시트 A열(스태프가 매긴 번호)만 씀. 비어 있으면 '번호 없음' — 시트에 번호가 생기면 다음 수집 때 달림.
+  // 마지막 번호 행보다 위에서 비어 있는 행만 '스태프가 비워 둔 행'으로 봄 (아래쪽은 아직 번호를 안 받은 새 지원자)
+  const lastStaffRow = Math.max(0, ...out.filter(a => a.appNo != null).map(a => a.row));
+  out.forEach(a => { a.skippedNo = a.appNo == null && a.row < lastStaffRow; });
+  out.forEach((a, i) => { a.seq = i + 1; a.no = a.appNo != null ? String(a.appNo).padStart(3, '0') : '미부여'; });
   classify(out, headers, map);
   return { list: out, headers, map };
 }
@@ -900,7 +898,7 @@ function classify(list, headers, map) {
     if (!a.b) a.warnReasons.push('생년월일 확인 불가');
     if (!a.nationality) a.warnReasons.push('국적 미기재');
     if (!a.files.length) a.warnReasons.push('첨부파일 없음');
-    if (a.appNo == null) a.warnReasons.push('스태프가 번호를 비워 둔 행 (중복·제외 추정)');
+    if (a.skippedNo) a.warnReasons.push('스태프가 번호를 비워 둔 행 (중복·제외 추정)');
     const k = compact(a.name).replace(/[a-z]/g, '') + '|' + norm(a.birth);
     if (seen[k].length > 1) a.warnReasons.push(`중복 지원 의심 (시트 ${seen[k].map(x => x.row).join(', ')}행)`);
   });
