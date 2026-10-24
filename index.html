@@ -69,9 +69,11 @@ body.login-mode .layout { grid-template-columns: 1fr; }
 .login input { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px; background: var(--panel); color: var(--ink); }
 #lgCode { letter-spacing: 6px; font-size: 18px; }
 /* 워터마크: 종이(인쇄 포함)와 화면 전체 */
-body.wm .sheet::before { content: ""; position: absolute; inset: 0; background-image: var(--wm-paper); pointer-events: none; z-index: 6; }
-body.wm::after { content: ""; position: fixed; inset: 0; background-image: var(--wm-screen); pointer-events: none; z-index: 45; }
-@media print { body.wm::after { display: none; } }
+/* 워터마크: 지원서 종이에만, 글자 뒤에 옅게 (인쇄 포함) */
+body.wm .sheet::before { content: ""; position: absolute; inset: 0; background-image: var(--wm-paper); pointer-events: none; z-index: 0; }
+.sheet > :not(.foot) { position: relative; z-index: 1; }
+.sheet > .foot { z-index: 1; }
+.sheet.is-hidden::after { z-index: 2; }
 /* 상단바·사이드바: 심사 메모(크림)·검토 상자(주황)와 어울리는 따뜻한 베이지 */
 :root { --chrome: #f7f3ea; --chrome-head: #eee6d6; --chrome-line: #e0d6c2; }
 :root[data-theme="dark"] { --chrome: #221f1a; --chrome-head: #2b2720; --chrome-line: #3b352b; }
@@ -277,6 +279,7 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
 .rep-on { font-size: 11px; color: #2f5bd3; }
 .thumb { position: relative; }
 .thumb-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
+#wmBtn.on { border-color: var(--accent); color: var(--accent); }
 .heart { border: 1px solid var(--chrome-line); background: var(--panel); color: var(--ink-2); border-radius: 99px; font-size: 12px; line-height: 1; padding: 3px 8px; cursor: pointer; min-width: 44px; }
 .heart:hover { border-color: #e0457b; color: #e0457b; }
 .heart.on { color: #e0457b; border-color: #f2a8c2; background: #fff0f5; }
@@ -347,7 +350,7 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
   <label class="chk"><input type="checkbox" id="showHidden"> 숨김 포함</label>
   <label class="chk"><input type="checkbox" id="onlyWarn"> 검토 필요만</label>
   <button class="btn icon" id="printBtn" title="인쇄 · PDF 저장 (지금 보는 지원자 / 현재 목록 전체)" aria-label="인쇄 · PDF 저장" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg></button>
-  <button class="btn" id="logoutBtn" hidden>로그아웃</button>
+  <button class="btn" id="wmBtn" hidden title="워터마크 켜기/끄기 (관리자만, 모두에게 적용)">워터마크</button>
   <button class="btn icon" id="themeBtn" title="화면 모드" aria-label="화면 모드"></button>
   <button class="btn icon" id="reloadBtn" title="데이터 다시 불러오기 (CSV)" aria-label="데이터 다시 불러오기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
   </div>
@@ -507,7 +510,9 @@ function applyRows(rows, quiet) {
     ? document.activeElement.closest('.sheet').dataset.key : null;
   const keepMemo = focusMemo ? memos[focusMemo] : null;
   const n = { memos: {}, reviews: {}, overrides: {}, repPhoto: {}, signs: {}, crops: {}, likes: {}, rots: {} };
+  const st = {};
   rows.forEach(({ key, field, value }) => {
+    if (key === '_settings') { st[field] = value; return; }
     if (!value) return;
     if (field === 'memo') n.memos[key] = value;
     else if (field === 'review') n.reviews[key] = value;
@@ -519,6 +524,7 @@ function applyRows(rows, quiet) {
     else if (field.startsWith('rot:')) (n.rots[key] = n.rots[key] || {})[field.slice(4)] = +value || 0;
   });
   if (focusMemo != null) n.memos[focusMemo] = keepMemo;      // 입력 중인 메모는 덮어쓰지 않음
+  if (JSON.stringify(st) !== JSON.stringify(SETTINGS)) { SETTINGS = st; updateWatermark(); }
   const same = JSON.stringify(n) === JSON.stringify({ memos, reviews, overrides, repPhoto, signs, crops, likes, rots });
   ({ memos, reviews, overrides, repPhoto, signs, crops, likes, rots } = n);
   if (same) return false;                                   // 내가 방금 바꾼 것과 같으면 다시 그리지 않음
@@ -618,19 +624,50 @@ const imgSrc = id => {
 };
 // 웹 앱: data-thumb 이미지를 화면 근처에 오면 4개씩 차례로 받아 옴
 const thumbWait = {}, thumbQueue = []; let thumbBusy = 0;
+// 받은 사진은 브라우저 저장소(IndexedDB)에 보관 → 다음에 열 때 서버를 거치지 않음. 로그아웃하면 지움
+const THUMB_DB = 'wgh-thumbs';
+const idb = (() => {
+  let p = null, dbRef = null;
+  const open = () => p || (p = new Promise((res, rej) => {
+    const r = indexedDB.open(THUMB_DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('t');
+    r.onsuccess = () => { dbRef = r.result; res(r.result); }; r.onerror = () => rej(r.error);
+  }));
+  return {
+    get: k => open().then(db => new Promise(res => { const q = db.transaction('t').objectStore('t').get(k); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); })).catch(() => null),
+    set: (k, v) => open().then(db => { db.transaction('t', 'readwrite').objectStore('t').put(v, k); }).catch(() => {}),
+    clear: () => { try { if (dbRef) dbRef.close(); } catch {} dbRef = null; p = null; try { indexedDB.deleteDatabase(THUMB_DB); } catch {} },
+  };
+})();
+function showThumb(id, uri) {
+  IMG[id] = uri; const u = imgSrc(id);
+  document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(im => { im.src = u; });
+}
 function loadThumb(id) {
   if (IMG[id]) return Promise.resolve(IMG[id]);
-  if (!thumbWait[id]) thumbWait[id] = new Promise(res => { thumbQueue.push([id, res]); pumpThumbs(); });
+  if (!thumbWait[id]) thumbWait[id] = idb.get('800:' + id).then(hit => {
+    if (hit) { showThumb(id, hit); return hit; }
+    return new Promise(res => { thumbQueue.push([id, res]); pumpThumbs(); });
+  });
   return thumbWait[id];
 }
 function pumpThumbs() {
-  while (thumbBusy < 4 && thumbQueue.length) {
+  while (thumbBusy < 6 && thumbQueue.length) {
     const [id, res] = thumbQueue.shift(); thumbBusy++;
     call('getThumb', id, 800).then(d => {
-      if (d && d.content) { IMG[id] = `data:${d.mimeType};base64,${d.content}`; const u = imgSrc(id); document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(im => { im.src = u; }); }
+      if (d && d.content) { const uri = `data:${d.mimeType};base64,${d.content}`; showThumb(id, uri); idb.set('800:' + id, uri); }
       res(IMG[id] || null);
-    }).catch(() => res(null)).finally(() => { thumbBusy--; pumpThumbs(); });
+    }).catch(() => { delete thumbWait[id]; res(null); }).finally(() => { thumbBusy--; pumpThumbs(); });
   }
+}
+// 첫 화면이 뜬 뒤 나머지 사진도 뒤에서 미리 받아 둠 (보이는 것 먼저 받고 나서)
+let prefetchT = null;
+function prefetchAll() {
+  clearTimeout(prefetchT);
+  prefetchT = setTimeout(() => {
+    if (!WEB || !DATA) return;
+    DATA.list.forEach(a => a.files.forEach(f => { if (f.kind === 'photo' || f.kind === 'video') loadThumb(f.id); }));
+  }, 4000);
 }
 const thumbIO = WEB && window.IntersectionObserver ? new IntersectionObserver(es => es.forEach(e => {
   if (e.isIntersecting) { thumbIO.unobserve(e.target); loadThumb(e.target.dataset.thumb); }
@@ -1071,7 +1108,7 @@ function paginate(secEl) {
       <div class="sheet-top">
         <div class="ttl">${titleHtml(SHEET_TITLE)}</div>
         <div class="meta">지원번호 <b>${a.no}</b><br>접수 ${esc(fmtTs(a.ts) || a.timestamp)}<br>시트 ${a.row}행 · <span data-pg></span></div>
-      </div><div class="body"></div>`
+      </div><div class="body"></div><div class="foot">${a.no} · ${esc(a.name)} · <span data-pg></span></div>`
       : `<div class="body"></div><div class="foot">${a.no} · ${esc(a.name)} · <span data-pg></span></div>`;
     secEl.appendChild(pg); pages.push(pg);
     body = pg.querySelector('.body');
@@ -1110,7 +1147,7 @@ function paginate(secEl) {
       if (!fits() && b.classList.contains('q')) { const rest = splitQ(b); if (rest) { queue.unshift(rest); newPage(); } }
     }
   }
-  pages.forEach((p, i) => { p.querySelector('[data-pg]').textContent = `${i + 1}/${pages.length}쪽`; });
+  pages.forEach((p, i) => { p.querySelectorAll('[data-pg]').forEach(e => { e.textContent = `${i + 1}/${pages.length}쪽`; }); });
   secEl.classList.remove('paginating');
 }
 
@@ -1308,7 +1345,17 @@ function closeCrop() { $('#cropModal').hidden = true; cropState = null; }
 })();
 
 // ===================== 워터마크 =====================
-const WATERMARK = false;   // 보는 사람 계정 워터마크 (지금은 끔 — true로 바꾸면 다시 켜짐)
+// 켜고 끄기는 관리자(ADMIN)만. 설정은 심사기록의 '_settings' 행으로 모두에게 공유 (기본: 켬)
+const ADMIN = 'jk@monsterahaus.com';
+let SETTINGS = {};
+let WM_TEXT = '';
+const wmOn = () => SETTINGS.watermark !== '0';
+function updateWatermark() {
+  if (WM_TEXT && wmOn()) setWatermark(WM_TEXT); else document.body.classList.remove('wm');
+  const b = document.getElementById('wmBtn'); if (!b) return;
+  b.hidden = !(WEB && VIEWER && VIEWER.toLowerCase() === ADMIN);
+  b.textContent = wmOn() ? '워터마크 켜짐' : '워터마크 꺼짐'; b.classList.toggle('on', wmOn());
+}
 function setWatermark(text) {
   const tile = (color, w, h) => {
     const t = text.replace(/[<&"]/g, c => ({ '<': '&lt;', '&': '&amp;', '"': '&quot;' }[c]));
@@ -1316,8 +1363,7 @@ function setWatermark(text) {
     return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;
   };
   const r = document.documentElement.style;
-  r.setProperty('--wm-paper', tile('rgba(0,0,0,0.075)', 360, 200));
-  r.setProperty('--wm-screen', tile('rgba(128,128,128,0.06)', 460, 260));
+  r.setProperty('--wm-paper', tile('rgba(0,0,0,0.07)', 360, 200));
   document.body.classList.add('wm');
 }
 
@@ -1486,12 +1532,13 @@ function webLoad(first) {
   const y = window.scrollY, x = {}; document.querySelectorAll('.pair').forEach(p => { x[p.dataset.key] = p.scrollLeft; });
   return call('getInitial').then(d => {
     VIEWER = d.viewer; document.body.classList.remove('login-mode');
-    $('#logoutBtn').hidden = false; $('#logoutBtn').title = `${d.viewer} 로그아웃`;
     SUMMARY = d.summary || {};
-    if (first && WATERMARK) setWatermark(`${d.viewer} · ${d.now} · WE GO HIGH 대외비`);
+    if (first) WM_TEXT = `${d.viewer} · ${d.now} · WE GO HIGH 대외비`;
+    updateWatermark();
     syncSnapshot = '';
     load(d.csv, false, d.asOf);
     applyRows(d.state || []);
+    prefetchAll();
     if (!first) { window.scrollTo(0, y); document.querySelectorAll('.pair').forEach(p => { if (x[p.dataset.key]) p.scrollLeft = x[p.dataset.key]; }); }
     setSyncStat(collectedText());
   }).catch(err => {
@@ -1504,7 +1551,7 @@ function webLoad(first) {
 let VIEWER = '';
 function showLogin(msg) {
   SESSION = ''; store.set('session', ''); document.body.classList.add('login-mode');
-  DATA = null; $('#side').innerHTML = ''; $('#stat').textContent = ''; $('#logoutBtn').hidden = true;
+  DATA = null; $('#side').innerHTML = ''; $('#stat').textContent = ''; $('#wmBtn').hidden = true;
   const sync = document.getElementById('syncStat'); if (sync) sync.hidden = true;
   $('#main').innerHTML = `
     <div class="empty login">
@@ -1550,7 +1597,10 @@ if (WEB) {
     const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches('textarea, input');
     if (SESSION && !document.hidden && !typing && $('#cropModal').hidden) webLoad(false);
   }, 10 * 60 * 1000);
-  $('#logoutBtn').onclick = () => { const s = SESSION; gs('logout', s).finally(() => showLogin('로그아웃했습니다.')); };
+  $('#wmBtn').onclick = () => {
+    SETTINGS = { ...SETTINGS, watermark: wmOn() ? '0' : '1' }; updateWatermark();
+    saveField('_settings', 'watermark', SETTINGS.watermark);
+  };
 }
 else if (EMB) { const e = JSON.parse(EMB.textContent); load(e.csv, false, e.asOf); }
 else load(SAMPLE, true);
