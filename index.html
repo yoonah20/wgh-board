@@ -70,7 +70,7 @@ body.login-mode .layout { grid-template-columns: 1fr; }
 #lgCode { letter-spacing: 6px; font-size: 18px; }
 /* 워터마크: 종이(인쇄 포함)와 화면 전체 */
 /* 워터마크: 지원서 종이에만, 글자 뒤에 옅게 (인쇄 포함) */
-body.wm .sheet::before { content: ""; position: absolute; inset: 0; background-image: var(--wm-paper); pointer-events: none; z-index: 0; }
+body.wm .sheet::before { content: ""; position: absolute; inset: 0; background: var(--wm-paper) center / 100% 100% no-repeat; pointer-events: none; z-index: 0; }
 .sheet > :not(.foot) { position: relative; z-index: 1; }
 .sheet > .foot { z-index: 1; }
 .sheet.is-hidden::after { z-index: 2; }
@@ -1356,14 +1356,18 @@ function updateWatermark() {
   b.hidden = !(WEB && VIEWER && VIEWER.toLowerCase() === ADMIN);
   b.textContent = wmOn() ? '워터마크 켜짐' : '워터마크 꺼짐'; b.classList.toggle('on', wmOn());
 }
+// A4 한 장 크기(794×1123) 그림 하나에 문구를 비스듬히 촘촘하게 직접 배치 (반복·회전 없이 → 화면과 인쇄가 똑같음)
 function setWatermark(text) {
-  const tile = (color, w, h) => {
-    const t = text.replace(/[<&"]/g, c => ({ '<': '&lt;', '&': '&amp;', '"': '&quot;' }[c]));
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><text x="50%" y="50%" fill="${color}" font-family="sans-serif" font-size="15" text-anchor="middle" dominant-baseline="middle" transform="rotate(-28 ${w / 2} ${h / 2})">${t}</text></svg>`;
-    return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;
-  };
-  const r = document.documentElement.style;
-  r.setProperty('--wm-paper', tile('rgba(0,0,0,0.07)', 360, 200));
+  const FONT = 13, GAP = 64, ROW = 30, PW = 794, PH = 1123;
+  const ctx = document.createElement('canvas').getContext('2d'); ctx.font = `${FONT}px sans-serif`;
+  const W = Math.ceil(ctx.measureText(text).width) + GAP;
+  const t = text.replace(/[<&"]/g, c => ({ '<': '&lt;', '&': '&amp;', '"': '&quot;' }[c]));
+  let lines = '';
+  const R = Math.hypot(PW, PH);   // 돌려도 빈 곳이 없게 대각선 길이만큼 깔기
+  for (let r = 0, y = -R / 2; y < R / 2; r++, y += ROW)
+    for (let x = -R / 2 + (r % 2 ? W / 2 : 0); x < R / 2; x += W) lines += `<text x="${x.toFixed(0)}" y="${y.toFixed(0)}">${t}</text>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${PW}" height="${PH}" viewBox="0 0 ${PW} ${PH}"><g transform="translate(${PW / 2} ${PH / 2}) rotate(-28)" fill="rgba(0,0,0,0.075)" font-family="sans-serif" font-size="${FONT}">${lines}</g></svg>`;
+  document.documentElement.style.setProperty('--wm-paper', `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`);
   document.body.classList.add('wm');
 }
 
