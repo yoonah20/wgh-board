@@ -1103,14 +1103,13 @@ function sheetHtml(a) {
   const blocks = [
     sec('인적 사항'),
     blk(`<table>
-      <tr>${row('성명', a.name, 2)}<td class="photo-cell" rowspan="6">
+      <tr>${row('성명', a.name, 2)}<td class="photo-cell" rowspan="5">
         <div class="photo">
           ${photoOf(a) ? `<a href="${viewUrl(photoOf(a))}" target="_blank" rel="noopener">사진 원본 열기 ↗${repImg(a, '지원자 사진')}</a><button class="crop-btn no-print" data-crop>✂ 얼굴 맞추기</button>` : '사진 없음'}
         </div></td></tr>
       <tr>${row('생년월일', fmtBirth(a.b) || a.birth, 2)}</tr>
       <tr>${row('국적', a.nationality, 2)}</tr>
-      <tr>${row('연락처', fmtPhone(a.phone), 2)}</tr>
-      <tr>${row('이메일', a.email, 2)}</tr>
+      <tr>${row('연락처', [fmtPhone(a.phone), norm(a.email)].filter(Boolean).join('  ·  '), 2)}</tr>
       <tr>${row('주소', a.address, 2)}</tr>
       ${guardian.length ? `<tr><th>보호자</th><td colspan="3">${guardian.map(e => esc(fmtPhone(e.v))).join(' · ')}</td></tr>` : ''}
       ${a.gender ? `<tr>${row('성별', a.gender, 3)}</tr>` : ''}
