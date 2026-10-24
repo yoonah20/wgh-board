@@ -875,7 +875,10 @@ function groups(list) {
   const labelOf = (k, a) => groupBy === 'date' ? dayLabel(a.ts) : k;
   list.forEach(a => { const k = keyOf(a); if (!g.has(k)) g.set(k, { label: labelOf(k, a), items: [] }); g.get(k).items.push(a); });
   let arr = [...g.entries()];
-  if (groupBy === 'date') arr.sort((x, y) => y[0].localeCompare(x[0]));            // 최신 날짜 먼저
+  if (groupBy === 'date') {   // 최신 날짜 먼저, 같은 날짜 안에서도 최신이 위 → 아래에서 위로 보면 지원 순서
+    arr.sort((x, y) => y[0].localeCompare(x[0]));
+    arr.forEach(([, v]) => v.items.sort((x, y) => (y.ts || 0) - (x.ts || 0)));
+  }
   else if (groupBy === 'grade') arr.sort((x, y) => { const i = k => { const n = GRADE_ORDER.indexOf(k); return n < 0 ? 99 : n; }; return i(x[0]) - i(y[0]); });
   else {   // 학교별: 주요 학교 먼저(정한 순서), 나머지는 인원 많은 순
     const inc = k => k.startsWith(INCOMING) ? 1 : 0;   // 입학 예정 묶음은 맨 아래
