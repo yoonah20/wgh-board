@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WE GO HIGH 지원서</title>
+<title>[대외비] WGH 지원자 명단</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&family=Noto+Serif+KR:wght@700;900&display=swap">
 <style>
@@ -103,6 +103,7 @@ body::before { background: var(--chrome) !important; }
 .tb-left .stat { overflow: hidden; text-overflow: ellipsis; }
 .tb-right { justify-content: flex-end; flex-wrap: wrap; }
 @media screen and (max-width: 1400px) { .topbar { display: flex; } .tb-center { order: 3; width: 100%; justify-content: center; } .tb-right { margin-left: auto; } }
+#groupSel { border: 1px solid var(--line); border-radius: 8px; padding: 6px 28px 6px 10px; background: var(--panel); color: var(--ink); cursor: pointer; }
 input[type=search] { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 180px; background: var(--panel); }
 label.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; white-space: nowrap; cursor: pointer; }
 
@@ -333,12 +334,12 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
   </div>
   <div class="tb-center">
   <input type="search" id="q" placeholder="이름·학교·분야 검색">
-  <div class="seg" id="groupSeg">
-    <button data-g="date" class="on">날짜별</button>
-    <button data-g="school">학교별</button>
-    <button data-g="grade">학년별</button>
-    <button data-g="heart">하트순</button>
-  </div>
+  <select id="groupSel" title="정렬" aria-label="정렬">
+    <option value="date">날짜별</option>
+    <option value="school">학교별</option>
+    <option value="grade">학년별</option>
+    <option value="heart">하트순</option>
+  </select>
   </div>
   <div class="tb-right">
   <span class="stat sync" id="syncStat" hidden></span>
@@ -477,6 +478,9 @@ function setSyncStat(text, err) {
   const el = document.getElementById('syncStat'); if (!el) return;
   el.hidden = false; el.textContent = text; el.classList.toggle('err', !!err);
 }
+// 상단바 오른쪽: 시트에서 마지막으로 데이터를 수집한 날짜·시각
+let COLLECTED = '';
+const collectedText = () => COLLECTED ? `마지막 수집 ${COLLECTED}` : `저장됨 · ${hhmm()}`;
 const hhmm = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 function saveLocal() {
   store.set('memos', memos); store.set('reviews', reviews); store.set('overrides', overrides);
@@ -489,7 +493,7 @@ function saveField(key, field, value) {
   const who = (document.getElementById('who') || {}).value || '';
   setSyncStat('공유 저장 중…');
   api.save({ token: SYNC.token, key, field, value: value == null ? '' : String(value), by: who })
-    .then(d => { if (d.error) throw new Error(d.error); setSyncStat(`공유됨 · ${hhmm()}`); applyRows(d.rows, true); })
+    .then(d => { if (d.error) throw new Error(d.error); setSyncStat(collectedText()); applyRows(d.rows, true); })
     .catch(err => { if (WEB && needLogin(err)) return showLogin(); setSyncStat('공유 저장 실패 — 이 브라우저에만 저장됨', true); });
 }
 // 시트의 기록으로 로컬 상태를 통째로 맞춤 (시트가 기준)
@@ -539,7 +543,7 @@ function pullState(first) {
     .then(d => {
       if (d.error) throw new Error(d.error);
       if (first) uploadLocalOnly(d.rows);
-      applyRows(d.rows); setSyncStat(`공유됨 · ${hhmm()}`);
+      applyRows(d.rows); setSyncStat(collectedText());
     })
     .catch(err => { if (WEB && needLogin(err)) return showLogin(); setSyncStat('공유 연결 실패 — 이 브라우저에만 저장됨', true); });
 }
@@ -1147,7 +1151,7 @@ function renderMain(gs) {
 function rerender() { const y = window.scrollY; render(); window.scrollTo(0, y); }
 function render() {
   if (!DATA) return renderEmpty();
-  document.querySelectorAll('#groupSeg button').forEach(b => b.classList.toggle('on', b.dataset.g === groupBy));
+  $('#groupSel').value = groupBy;
   const gs = groups(visibleList());
   renderStat(); renderSide(gs); renderMain(gs); hydrateThumbs();
 }
@@ -1283,7 +1287,7 @@ function printPeople(key) {
   let done = 0;
   setSyncStat(`인쇄 준비 중… 사진 0/${ids.length}`);
   Promise.all(ids.map(id => loadThumb(id).then(() => setSyncStat(`인쇄 준비 중… 사진 ${++done}/${ids.length}`))))
-    .then(() => { setSyncStat(`공유됨 · ${hhmm()}`); setTimeout(() => window.print(), 300); });
+    .then(() => { setSyncStat(collectedText()); setTimeout(() => window.print(), 300); });
 }
 window.addEventListener('afterprint', () => { document.body.classList.remove('print-one'); document.querySelectorAll('.pair.print-target').forEach(p => p.classList.remove('print-target')); });
 // 화면에 가장 크게 보이는 지원자
@@ -1331,7 +1335,7 @@ document.addEventListener('keydown', e => {
 });
 $('#showHidden').onchange = render;
 $('#onlyWarn').onchange = render;
-$('#groupSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; groupBy = b.dataset.g; store.set('groupBy', groupBy); render(); };
+$('#groupSel').onchange = e => { groupBy = e.target.value; store.set('groupBy', groupBy); render(); };
 $('#side').onclick = e => {
   const hb = e.target.closest('[data-heart]');
   if (hb) {
@@ -1400,11 +1404,12 @@ $('#main').addEventListener('input', e => {
   memos[mk] = e.target.value; store.set('memos', memos);
   clearTimeout(memoTimers[mk]); memoTimers[mk] = setTimeout(() => saveField(mk, 'memo', memos[mk]), 1000);
 });
-// 상단바 제목: 'WE GO HIGH 지원자 명단 (10/24)' — 날짜는 들어 있는 데이터 기준일
+// 상단바 제목 + 마지막 수집 시각 (asOf: 'yyyy-MM-dd HH:mm' 또는 '2026-10-24 오후')
 function setAppTitle(asOf) {
-  const m = norm(asOf).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/), d = new Date();
-  const md = m ? `${+m[2]}/${+m[3]}` : `${d.getMonth() + 1}/${d.getDate()}`;
-  $('#appTitle').textContent = `WE GO HIGH 지원자 명단 (${md})`;
+  $('#appTitle').textContent = 'WE GO HIGH 지원자 명단';
+  const m = norm(asOf).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})(?:\D+(\d{1,2}):(\d{2}))?/);
+  COLLECTED = m ? `${+m[2]}/${+m[3]}${m[4] ? ` ${m[4].padStart(2, '0')}:${m[5]}` : ''}` : '';
+  if (COLLECTED) setSyncStat(collectedText());
 }
 
 // ===================== 예시 데이터 (가상 인물) =====================
@@ -1423,6 +1428,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if
 const EMB = document.getElementById('embedded');
 function webLoad(first) {
   if (first) $('#main').innerHTML = '<div class="empty">지원서를 불러오는 중…</div>';
+  const y = window.scrollY, x = {}; document.querySelectorAll('.pair').forEach(p => { x[p.dataset.key] = p.scrollLeft; });
   return call('getInitial').then(d => {
     VIEWER = d.viewer; document.body.classList.remove('login-mode');
     $('#logoutBtn').hidden = false; $('#logoutBtn').title = `${d.viewer} 로그아웃`;
@@ -1431,7 +1437,8 @@ function webLoad(first) {
     syncSnapshot = '';
     load(d.csv, false, d.asOf);
     applyRows(d.state || []);
-    setSyncStat(`공유됨 · ${hhmm()}`);
+    if (!first) { window.scrollTo(0, y); document.querySelectorAll('.pair').forEach(p => { if (x[p.dataset.key]) p.scrollLeft = x[p.dataset.key]; }); }
+    setSyncStat(collectedText());
   }).catch(err => {
     if (needLogin(err)) return showLogin();
     $('#main').innerHTML = `<div class="empty"><h2>지원서를 열 수 없습니다</h2><p>${esc(String(err && err.message || err))}</p>
@@ -1483,6 +1490,11 @@ function showLogin(msg) {
 if (WEB) {
   SESSION = store.get('session', '');
   if (SESSION) webLoad(true); else showLogin();
+  // 10분마다 시트를 다시 수집 (새 지원자 반영). 메모 입력 중이거나 창이 안 보이면 건너뜀
+  setInterval(() => {
+    const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches('textarea, input');
+    if (SESSION && !document.hidden && !typing && $('#cropModal').hidden) webLoad(false);
+  }, 10 * 60 * 1000);
   $('#logoutBtn').onclick = () => { const s = SESSION; gs('logout', s).finally(() => showLogin('로그아웃했습니다.')); };
 }
 else if (EMB) { const e = JSON.parse(EMB.textContent); load(e.csv, false, e.asOf); }
