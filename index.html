@@ -335,13 +335,16 @@ body.viewer-open { overflow: hidden; }
 .photo-cell .photo:hover .crop-btn, .crop-btn:focus-visible { opacity: 1; }
 .modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .modal[hidden] { display: none; }
-.mbox { background: var(--panel); color: var(--ink); border-radius: 12px; padding: 16px 18px; width: min(420px, 100%); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.mbox { background: var(--panel); color: var(--ink); border-radius: 12px; padding: 16px 18px; width: min(460px, 100%); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
 .mhead { font-size: 15px; }
 .cframe { position: relative; width: 300px; height: 400px; max-width: 100%; margin: 0 auto; overflow: hidden; background: #111; border-radius: 6px; cursor: grab; touch-action: none; user-select: none; }
 .cframe:active { cursor: grabbing; }
 .cframe img { pointer-events: none; }
 .cguide { position: absolute; inset: 10% 18% 30%; border: 2px dashed rgba(255,255,255,.6); border-radius: 50%; pointer-events: none; }
-.mfoot { display: flex; align-items: center; gap: 8px; }
+.mfoot { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+.mfoot .mlabel { white-space: nowrap; font-size: 13px; color: var(--ink-2); }
+.mfoot .btn { white-space: nowrap; }
+#cRotL, #cRotR { font-size: 18px; line-height: 1; width: 38px; padding: 5px 0; }
 .mfoot input[type=range] { flex: 1; min-width: 80px; }
 @media print { .pair { display: block; margin: 0; } }
 
@@ -419,8 +422,10 @@ body.viewer-open { overflow: hidden; }
     <div class="note">끌어서 위치를 옮기고, 마우스 휠이나 아래 막대로 확대하세요. 사이드바와 지원서 1쪽에 이 모양 그대로 나옵니다.</div>
     <div class="cframe" id="cFrame"><img id="cImg" alt="" draggable="false"><div class="cguide"></div></div>
     <div class="mfoot">
-      <span>확대</span><input type="range" id="cZoom" min="1" max="8" step="0.01" value="1">
+      <span class="mlabel">확대</span><input type="range" id="cZoom" min="1" max="8" step="0.01" value="1">
       <button class="btn" id="cRotL" title="왼쪽으로 90도 회전">↺</button><button class="btn" id="cRotR" title="오른쪽으로 90도 회전">↻</button>
+    </div>
+    <div class="mfoot">
       <button class="btn" id="cReset">처음대로</button>
       <div class="spacer"></div>
       <button class="btn" id="cCancel">취소</button><button class="btn primary" id="cSave">저장</button>
