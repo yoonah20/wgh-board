@@ -369,6 +369,7 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
     <div class="cframe" id="cFrame"><img id="cImg" alt="" draggable="false"><div class="cguide"></div></div>
     <div class="mfoot">
       <span>확대</span><input type="range" id="cZoom" min="1" max="8" step="0.01" value="1">
+      <button class="btn" id="cRotL" title="왼쪽으로 90도 회전">↺</button><button class="btn" id="cRotR" title="오른쪽으로 90도 회전">↻</button>
       <button class="btn" id="cReset">처음대로</button>
       <div class="spacer"></div>
       <button class="btn" id="cCancel">취소</button><button class="btn primary" id="cSave">저장</button>
@@ -447,6 +448,7 @@ let memos = store.get('memos', {});           // key -> text
 let reviews = store.get('reviews', {});       // key -> 'ok' (검토 후 승인)
 let signs = store.get('signs', {});           // key -> { '1차': true, '2차': true, '최종': true }
 let repPhoto = store.get('repPhoto', {});     // key -> 대표 사진 드라이브 id
+let rots = store.get('rots', {});            // key -> { 사진 id: 90|180|270 } 사진 회전
 let likes = store.get('likes', {});          // key -> { 이메일: true } 하트 누른 사람들
 let crops = store.get('crops', {});           // key -> { id, cx, cy, w, ar } 대표 사진 3:4 자르기 (이미지 비율 기준)
 const STAGES = ['1차', '2차', '최종'];
@@ -484,7 +486,7 @@ const collectedText = () => COLLECTED ? `마지막 수집 ${COLLECTED}` : `저�
 const hhmm = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 function saveLocal() {
   store.set('memos', memos); store.set('reviews', reviews); store.set('overrides', overrides);
-  store.set('repPhoto', repPhoto); store.set('signs', signs); store.set('crops', crops); store.set('likes', likes);
+  store.set('repPhoto', repPhoto); store.set('signs', signs); store.set('crops', crops); store.set('likes', likes); store.set('rots', rots);
 }
 // 항목 하나 저장: 로컬에 바로 쓰고, 공유 중이면 시트로도 보냄
 function saveField(key, field, value) {
@@ -504,7 +506,7 @@ function applyRows(rows, quiet) {
   const focusMemo = document.activeElement && document.activeElement.matches && document.activeElement.matches('[data-memo]')
     ? document.activeElement.closest('.sheet').dataset.key : null;
   const keepMemo = focusMemo ? memos[focusMemo] : null;
-  const n = { memos: {}, reviews: {}, overrides: {}, repPhoto: {}, signs: {}, crops: {}, likes: {} };
+  const n = { memos: {}, reviews: {}, overrides: {}, repPhoto: {}, signs: {}, crops: {}, likes: {}, rots: {} };
   rows.forEach(({ key, field, value }) => {
     if (!value) return;
     if (field === 'memo') n.memos[key] = value;
@@ -514,10 +516,11 @@ function applyRows(rows, quiet) {
     else if (field === 'crop') { try { n.crops[key] = JSON.parse(value); } catch {} }
     else if (field.startsWith('sign:')) (n.signs[key] = n.signs[key] || {})[field.slice(5)] = true;
     else if (field.startsWith('like:')) (n.likes[key] = n.likes[key] || {})[field.slice(5)] = true;
+    else if (field.startsWith('rot:')) (n.rots[key] = n.rots[key] || {})[field.slice(4)] = +value || 0;
   });
   if (focusMemo != null) n.memos[focusMemo] = keepMemo;      // 입력 중인 메모는 덮어쓰지 않음
-  const same = JSON.stringify(n) === JSON.stringify({ memos, reviews, overrides, repPhoto, signs, crops, likes });
-  ({ memos, reviews, overrides, repPhoto, signs, crops, likes } = n);
+  const same = JSON.stringify(n) === JSON.stringify({ memos, reviews, overrides, repPhoto, signs, crops, likes, rots });
+  ({ memos, reviews, overrides, repPhoto, signs, crops, likes, rots } = n);
   if (same) return false;                                   // 내가 방금 바꾼 것과 같으면 다시 그리지 않음
   saveLocal();
   if (DATA && !focusMemo) rerender();
@@ -590,7 +593,29 @@ const thumbUrl = id => `https://drive.google.com/thumbnail?id=${encodeURICompone
 let SUMMARY = window.AI_SUMMARY || {};      // 시트 행 번호 → AI 요약 (배포본에만 넣음)
 const IMG = window.EMBED_IMAGES || {};   // 드라이브 이미지를 파일에 직접 넣어 둔 경우 (id → data URI)
 const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
-const imgSrc = id => IMG[id] || (WEB ? BLANK : thumbUrl(id));
+// 사진 회전: 회전 각도가 있으면 캔버스로 돌린 사본을 만들어 씀 (ROT 캐시)
+const ROT = {};
+const rotOf = id => { for (const k in rots) if (rots[k] && rots[k][id]) return rots[k][id] % 360; return 0; };
+function rotateTo(id, deg) {
+  const ck = id + ':' + deg; if (ROT[ck] || ROT[ck] === null) return;
+  ROT[ck] = null;   // 만드는 중
+  const im = new Image();
+  im.onload = () => {
+    const c = document.createElement('canvas'), sw = deg % 180 !== 0;
+    c.width = sw ? im.naturalHeight : im.naturalWidth; c.height = sw ? im.naturalWidth : im.naturalHeight;
+    const x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(deg * Math.PI / 180); x.drawImage(im, -im.naturalWidth / 2, -im.naturalHeight / 2);
+    ROT[ck] = c.toDataURL('image/jpeg', 0.9);
+    document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(e => { if (rotOf(id) === deg) e.src = ROT[ck]; });
+    if (!$('#cropModal').hidden && $('#cImg').dataset.wait === ck) $('#cImg').src = ROT[ck];
+  };
+  im.src = IMG[id];
+}
+const imgSrc = id => {
+  const base = IMG[id] || (WEB ? BLANK : thumbUrl(id)), deg = rotOf(id);
+  if (!deg || !IMG[id]) return base;
+  const r = ROT[id + ':' + deg]; if (r) return r;
+  rotateTo(id, deg); return base;
+};
 // 웹 앱: data-thumb 이미지를 화면 근처에 오면 4개씩 차례로 받아 옴
 const thumbWait = {}, thumbQueue = []; let thumbBusy = 0;
 function loadThumb(id) {
@@ -602,7 +627,7 @@ function pumpThumbs() {
   while (thumbBusy < 4 && thumbQueue.length) {
     const [id, res] = thumbQueue.shift(); thumbBusy++;
     call('getThumb', id, 800).then(d => {
-      if (d && d.content) { IMG[id] = `data:${d.mimeType};base64,${d.content}`; document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(im => { im.src = IMG[id]; }); }
+      if (d && d.content) { IMG[id] = `data:${d.mimeType};base64,${d.content}`; const u = imgSrc(id); document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(im => { im.src = u; }); }
       res(IMG[id] || null);
     }).catch(() => res(null)).finally(() => { thumbBusy--; pumpThumbs(); });
   }
@@ -614,7 +639,7 @@ function hydrateThumbs() {
   if (!WEB) return;
   document.querySelectorAll('img[data-thumb]').forEach(im => {
     const id = im.dataset.thumb;
-    if (IMG[id]) { if (im.src !== IMG[id]) im.src = IMG[id]; }
+    if (IMG[id]) { const u = imgSrc(id); if (im.src !== u) im.src = u; }
     else if (thumbIO) thumbIO.observe(im); else loadThumb(id);
   });
 }
@@ -1224,8 +1249,22 @@ function openCrop(key) {
     $('#cZoom').value = wmax / cropState.w; drawCrop();
   };
   img.removeAttribute('style');
-  if (IMG[id] || !WEB) { img.src = imgSrc(id); if (img.complete && img.naturalWidth) img.onload(); }
-  else loadThumb(id).then(u => { if (u) img.src = u; });
+  const show = () => {
+    const deg = rotOf(id), ck = id + ':' + deg;
+    img.dataset.wait = ck;
+    const u = imgSrc(id);
+    if (!deg || ROT[ck]) { img.src = u; if (img.complete && img.naturalWidth && img.src === u) img.onload(); }   // 회전본이 아직이면 rotateTo가 다 만든 뒤 넣어 줌
+  };
+  if (IMG[id] || !WEB) show(); else loadThumb(id).then(u => { if (u) show(); });
+}
+// 대표 사진 90도 회전 (회전하면 그 사진의 얼굴 맞추기는 처음부터)
+function rotatePhoto(key, id, step) {
+  const deg = ((rotOf(id) + step) % 360 + 360) % 360;
+  rots[key] = rots[key] || {}; if (deg) rots[key][id] = deg; else delete rots[key][id];
+  saveField(key, 'rot:' + id, deg ? String(deg) : '');
+  if (crops[key] && crops[key].id === id) { delete crops[key]; saveField(key, 'crop', ''); }
+  cropState = null; openCrop(key);
+  rerender();
 }
 function clampCrop() {
   const c = cropState; c.w = Math.min(c.wmax, Math.max(c.wmax / 8, c.w));
@@ -1250,6 +1289,8 @@ function closeCrop() { $('#cropModal').hidden = true; cropState = null; }
     cropState.w *= e.deltaY > 0 ? 1.08 : 1 / 1.08; drawCrop(); $('#cZoom').value = cropState.wmax / cropState.w;
   }, { passive: false });
   $('#cZoom').oninput = e => { if (!cropState) return; cropState.w = cropState.wmax / +e.target.value; drawCrop(); };
+  $('#cRotL').onclick = () => { if (cropState) rotatePhoto(cropState.key, cropState.id, -90); };
+  $('#cRotR').onclick = () => { if (cropState) rotatePhoto(cropState.key, cropState.id, 90); };
   $('#cReset').onclick = () => { if (!cropState) return; Object.assign(cropState, { w: cropState.wmax, cx: .5, cy: .5 }); $('#cZoom').value = 1; drawCrop(); };
   $('#cCancel').onclick = closeCrop;
   $('#cropModal').onclick = e => { if (e.target.id === 'cropModal') closeCrop(); };
