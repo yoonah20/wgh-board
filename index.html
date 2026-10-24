@@ -1533,7 +1533,7 @@ function webLoad(first) {
   return call('getInitial').then(d => {
     VIEWER = d.viewer; document.body.classList.remove('login-mode');
     SUMMARY = d.summary || {};
-    if (first) WM_TEXT = `${d.viewer} · ${d.now} · WE GO HIGH 대외비`;
+    if (first) WM_TEXT = `${d.viewer} · ${d.now} · 대외비`;
     updateWatermark();
     syncSnapshot = '';
     load(d.csv, false, d.asOf);
