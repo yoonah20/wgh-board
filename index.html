@@ -1390,7 +1390,7 @@ function showLogin(msg) {
       <form id="loginCode" hidden><label>인증코드 (6자리)<input type="text" id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
         <button class="btn primary">확인</button> <button type="button" class="btn" id="lgBack">이메일 다시 입력</button></form>
       <p class="msg" id="lgMsg" role="alert">${esc(msg || '')}</p>
-      <p class="note">한 번 인증하면 이 브라우저에서는 30일 동안 다시 묻지 않습니다.</p>
+      <p class="note">한 번 인증하면 이 브라우저에서는 1년 동안 다시 묻지 않습니다.</p>
     </div>`;
   const msgEl = $('#lgMsg'), say = (t, ok) => { msgEl.textContent = t; msgEl.style.color = ok ? 'var(--ink-2)' : ''; };
   $('#lgEmail').value = store.get('loginEmail', '');
