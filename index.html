@@ -1559,6 +1559,15 @@ function updateWatermark() {
   b.hidden = !(WEB && VIEWER && VIEWER.toLowerCase() === ADMIN);
   b.textContent = wmOn() ? '워터마크 켜짐' : '워터마크 꺼짐'; b.classList.toggle('on', wmOn());
 }
+// 접속 IP를 워터마크에 덧붙임 (공인 IP 조회: api.ipify.org, 3초 안에 안 오면 IP 없이) + 활동 기록에 남김
+function addIpToWatermark(viewer, now) {
+  const ctl = new AbortController(); setTimeout(() => ctl.abort(), 3000);
+  fetch('https://api.ipify.org?format=json', { credentials: 'omit', signal: ctl.signal }).then(r => r.json()).then(j => {
+    const ip = String(j && j.ip || '').replace(/[^0-9a-fA-F.:]/g, '').slice(0, 45); if (!ip) return;
+    WM_TEXT = `${viewer} · IP ${ip} · ${now} · 대외비`; updateWatermark();
+    logEv('접속', '', 'IP ' + ip);
+  }).catch(() => {});
+}
 // A4 한 장 크기(794×1123) 그림 하나에 문구를 비스듬히 촘촘하게 직접 배치 (반복·회전 없이 → 화면과 인쇄가 똑같음)
 function setWatermark(text) {
   const FONT = 13, GAP = 64, ROW = 30, PW = 794, PH = 1123;
@@ -1566,9 +1575,9 @@ function setWatermark(text) {
   const W = Math.ceil(ctx.measureText(text).width) + GAP;
   const t = text.replace(/[<&"]/g, c => ({ '<': '&lt;', '&': '&amp;', '"': '&quot;' }[c]));
   let lines = '';
-  const R = Math.hypot(PW, PH);   // 돌려도 빈 곳이 없게 대각선 길이만큼 깔기
+  const R = Math.hypot(PW, PH);   // 돌려도 빈 곳이 없게 대각선 길이만큼 깔기 (줄마다 글자 폭의 0.382배씩 밀어서 계단처럼 어긋나게)
   for (let r = 0, y = -R / 2; y < R / 2; r++, y += ROW)
-    for (let x = -R / 2 + (r % 2 ? W / 2 : 0); x < R / 2; x += W) lines += `<text x="${x.toFixed(0)}" y="${y.toFixed(0)}">${t}</text>`;
+    for (let x = -R / 2 - W + ((r * 0.382) % 1) * W; x < R / 2; x += W) lines += `<text x="${x.toFixed(0)}" y="${y.toFixed(0)}">${t}</text>`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${PW}" height="${PH}" viewBox="0 0 ${PW} ${PH}"><g transform="translate(${PW / 2} ${PH / 2}) rotate(-28)" fill="rgba(0,0,0,0.075)" font-family="sans-serif" font-size="${FONT}">${lines}</g></svg>`;
   document.documentElement.style.setProperty('--wm-paper', `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`);
   document.body.classList.add('wm');
@@ -1832,7 +1841,7 @@ function webLoad(first) {
     VIEWER = d.viewer; document.body.classList.remove('login-mode');
     $('#adminBtn').hidden = !isAdmin();
     SUMMARY = d.summary || {};
-    if (first) WM_TEXT = `${d.viewer} · ${d.now} · 대외비`;
+    if (first) { WM_TEXT = `${d.viewer} · ${d.now} · 대외비`; addIpToWatermark(d.viewer, d.now); }
     updateWatermark();
     syncSnapshot = '';
     load(d.csv, false, d.asOf);
