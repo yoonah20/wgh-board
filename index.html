@@ -2050,11 +2050,11 @@ function dailyCols(list) {
   return `<div class="cols">${out.map(([dt, n], i) => `<div class="c" title="${dayLabel(dt)} · ${n}명"><i style="height:${max ? n / max * 100 : 0}%"></i>${(i === maxI || i === lastI) && n ? `<b style="bottom:calc(${n / max * 100}% + 2px)">${n}</b>` : ''}</div>`).join('')}</div>
     <div class="cols-x">${out.map(([dt], i) => `<span>${i % step === 0 || i === lastI ? `${dt.getMonth() + 1}/${dt.getDate()}` : ''}</span>`).join('')}</div>`;
 }
-// 학교 비중 원형 그래프: 상위 5곳 + 그 외 (조각 6개 이하, 색은 순서 고정)
-const DONUT_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'], DONUT_REST = '#d6d3d1';
+// 학교 비중 원형 그래프: 상위 6곳 + 그 외 (색은 순서 고정)
+const DONUT_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'], DONUT_REST = '#d6d3d1';
 function donut(rows, total) {
   if (!total) return '<div class="note">해당 없음</div>';
-  const top = rows.filter(r => !/미기재/.test(r[0])).slice(0, 5);
+  const top = rows.filter(r => !/미기재/.test(r[0])).slice(0, DONUT_COLORS.length);
   const restN = total - top.reduce((s, r) => s + r[1], 0);
   const segs = [...top.map((r, i) => [r[0], r[1], DONUT_COLORS[i], true]), ...(restN ? [[`그 외 ${rows.length - top.length}곳`, restN, DONUT_REST, false]] : [])];
   const R = 70, C = 90, W = 30;
@@ -2093,7 +2093,7 @@ function renderStats() {
       <div class="tile"><div class="k">지원 학교</div><div class="v">${schools.filter(r => !/미기재/.test(r[0])).length}<small>곳</small></div><div class="d">국내 재학생의 재학 학교</div></div>
     </div>
     <div class="slay">
-      <div class="card a-donut"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 5곳</div>${donut(schools, enrolled.length)}</div>
+      <div class="card a-donut"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 6곳</div>${donut(schools, enrolled.length)}</div>
       <div class="card a-list"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
       <div class="card a-next"><h3>입학 예정자(중3)의 진학 예정 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
       <div class="card a-age"><h3>학년</h3><div class="cap">전체 ${N}명</div>${barList(grades, N)}
