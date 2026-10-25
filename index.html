@@ -446,7 +446,7 @@ body::before { background: #141416 !important; }
     <option value="date">날짜별</option>
     <option value="school">학교별</option>
     <option value="grade">학년별</option>
-    <option value="heart">하트순</option>
+    <option value="heart">내 하트</option>
   </select>
   </div>
   <div class="tb-right">
@@ -1030,13 +1030,15 @@ const groupSchool = a => {
   if (isIncoming(a)) return INCOMING + (/고등학교|고$|예고/.test(norm(a.nextSchool)) ? canonSchool(a.nextSchool) : '진학 학교 미기재');
   return canonSchool(a.school) || '학교 미기재';
 };
-const likeCount = a => Object.keys(likes[a.key] || {}).length;
+// 하트는 나만 보는 개인 표시 (다른 사람 하트·개수는 보이지 않음)
+const myLike = a => !!(likes[a.key] || {})[myId()];
 const myId = () => VIEWER || 'me';
 function groups(list) {
   const g = new Map();
-  if (groupBy === 'heart') {   // 하트 많은 순 (같으면 먼저 접수한 순)
-    const items = [...list].sort((x, y) => likeCount(y) - likeCount(x) || (x.ts || 0) - (y.ts || 0));
-    return items.length ? [{ label: '하트 많은 순', items }] : [];
+  if (groupBy === 'heart') {   // 내가 하트한 지원자 먼저 (그 안에선 최신 접수 먼저)
+    const by = (x, y) => (y.ts || 0) - (x.ts || 0);
+    const mine = list.filter(myLike).sort(by), rest = list.filter(a => !myLike(a)).sort(by);
+    return [...(mine.length ? [{ label: `내 하트 ♥`, items: mine }] : []), ...(rest.length ? [{ label: '나머지', items: rest }] : [])];
   }
   const keyOf = a => groupBy === 'date' ? dayKey(a.ts) : groupBy === 'school' ? groupSchool(a) : a.gradeN;
   const labelOf = (k, a) => groupBy === 'date' ? dayLabel(a.ts) : k;
@@ -1074,7 +1076,7 @@ function renderSide(gs) {
       <div class="item ${a.key === selected ? 'sel' : ''} ${isHidden(a) ? 'hidden-row' : ''}" data-key="${esc(a.key)}">
         <button class="more" data-more title="숨김·승인 등" aria-label="더 보기">⋯</button>
         <div class="thumb-col"><div class="thumb">${repImg(a)}</div>
-          <button class="heart ${(likes[a.key] || {})[myId()] ? 'on' : ''}" data-heart title="하트 (누른 사람: ${esc(Object.keys(likes[a.key] || {}).join(', ') || '없음')})" aria-label="하트">${(likes[a.key] || {})[myId()] ? '♥' : '♡'} ${likeCount(a) || ''}</button></div>
+          <button class="heart ${myLike(a) ? 'on' : ''}" data-heart title="내 하트 (나만 보임)" aria-label="내 하트">${myLike(a) ? '♥' : '♡'}</button></div>
         <div style="min-width:0">
           <div class="nm">${esc(a.name) || '(이름 없음)'}${isHidden(a) ? '<span class="badge hide">숨김</span>' : needsReview(a) ? '<span class="badge warn">검토</span>' : ''}${stageBadge(a)}</div>
           <div class="sub">${[a.appNo != null ? '#' + a.appNo : '번호 없음', esc(sideSchool(a))].filter(Boolean).join(' · ')}</div>
