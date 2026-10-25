@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>[대외비] WGH 지원자 명단</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&family=Noto+Serif+KR:wght@700;900&display=swap">
 <style>
 /* 레이아웃: 왼쪽 지원자 목록 + 오른쪽 A4 종이 지원서 묶음. 종이는 두 테마 모두 흰 종이 그대로. */
@@ -376,6 +377,49 @@ body.viewer-open { overflow: hidden; }
   .sheet.last-print { page-break-after: auto; break-after: auto; }   /* 맨 끝 빈 쪽 방지 */
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ===================== 테마: 캐스팅 갤러리형 (어두운 상단바 · 사진 카드 사이드바 · 로고 빨강 포인트) ===================== */
+:root { --font-ui: 'Pretendard Variable', Pretendard, "Noto Sans KR", system-ui, sans-serif;
+  --bg: #e8e5e0; --accent: #e11d48; --accent-soft: #ffe4ea; --ink: #141416; --ink-2: #6b6b72; --line: #dedad3;
+  --chrome: #141416; --chrome-head: #efece7; --chrome-line: #2a2a2e; }
+body { font-family: var(--font-ui); }
+.topbar { background: #141416 !important; border-bottom: 1px solid #2a2a2e !important; color: #fff; }
+body::before { background: #141416 !important; }
+.topbar h1 { color: #fff; font-weight: 800; letter-spacing: .2px; }
+.topbar .stat, .topbar .stat.sync { color: #a1a1aa; }
+.topbar .stat b { color: #fb7185; }
+.topbar #q, .topbar #groupSel, .topbar .btn, .filters > summary { background-color: #1f1f23 !important; color: #e4e4e7 !important; border-color: #33333a !important; }
+.topbar #q::placeholder { color: #8a8a93; }
+.topbar #groupSel { background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http:%2F%2Fwww.w3.org%2F2000%2Fsvg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%2F%3E%3C%2Fsvg%3E") !important; }
+.topbar .btn:hover, .topbar #groupSel:hover, .topbar #q:focus { border-color: #fb7185 !important; }
+.filters:has(input:checked) > summary { border-color: #fb7185 !important; color: #fb7185 !important; }
+.filters .pop { color: var(--ink); background: #fff; }
+.filters .pop input { accent-color: #e11d48; }
+.layout { grid-template-columns: 400px 1fr; }
+.side { background: #efece7 !important; border-right: 0 !important; padding: 4px 0 24px; }
+.group-h { background: #efece7 !important; border: 0 !important; font-size: 13px; color: #57534e; padding: 12px 18px 6px; }
+.group-h span { color: #8a837b; }
+.item { margin: 6px 12px; padding: 12px; border-radius: 14px; background: #fff; border: 0 !important; box-shadow: 0 1px 2px rgba(0,0,0,.06); gap: 14px; }
+.item:hover { background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.10); }
+.item.sel { background: #fff; box-shadow: 0 0 0 2px #e11d48; }
+.item.hidden-row { opacity: .55; }
+.thumb { width: 92px; height: 122px; border-radius: 10px; }
+.item .nm { font-size: 16px; font-weight: 800; }
+.item .sub { font-size: 12.5px; }
+.item .sum { border: 0 !important; background: #f6f4f1; border-radius: 8px; opacity: 1; color: #57534e; }
+.heart { min-width: 92px; padding: 5px 0; font-size: 13px; border-color: #f1d5dc; background: #fff; }
+.heart:hover { border-color: #e11d48; color: #e11d48; }
+.heart.on { background: #ffe4ea; color: #e11d48; border-color: #fecdd6; }
+.more { top: 10px; right: 10px; }
+.main { background: #e8e5e0; }
+.grp-title { color: #57534e; }
+.badge.warn { background: #fff1e6; color: #c2410c; }
+.badge.ok { background: #e7f6ec; color: #15803d; }
+.menu { border-radius: 12px; }
+.viewer { background: rgba(20,20,22,.94); }
+.viewer .vbar { background: #141416; }
+.login h2 { font-weight: 800; }
+@media screen and (max-width: 1300px) { .layout { grid-template-columns: 340px 1fr; } .thumb { width: 76px; height: 101px; } .heart { min-width: 76px; } }
 </style>
 
 <div class="topbar">
