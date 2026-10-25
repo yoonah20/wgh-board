@@ -566,6 +566,19 @@ body::before { background: #141416 !important; }
 .brow .bn { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
 .brow .bn small { font-weight: 400; color: var(--ink-2); margin-left: 4px; }
 .blist.long .brow { grid-template-columns: minmax(0, 50%) minmax(40px, 1fr) 4.6em; }
+.donut { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.donut svg { width: 180px; height: 180px; flex: none; }
+.donut .dn { font-size: 30px; font-weight: 800; fill: var(--ink); }
+.donut .dl { font-size: 13px; fill: var(--ink-2); }
+.donut path:hover { opacity: .85; }
+.dleg { width: 100%; display: flex; flex-direction: column; gap: 2px; }
+.dli { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; font-size: 13.5px; }
+.dli.click { cursor: pointer; }
+.dli:hover { background: #f6f4f1; }
+.dli i { width: 12px; height: 12px; border-radius: 3px; }
+.dli span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dli b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dli b small { font-weight: 400; color: var(--ink-2); margin-left: 4px; }
 /* 일별 접수: 세로 막대 */
 .cols { display: flex; align-items: flex-end; gap: 2px; height: 150px; border-bottom: 1px solid #d6d3ce; padding-top: 18px; }
 .cols .c { flex: 1; min-width: 3px; position: relative; height: 100%; display: flex; align-items: flex-end; }
@@ -600,11 +613,11 @@ body.stats-open { overflow: hidden; }
     <option value="grade">학년별</option>
     <option value="heart">내 하트</option>
   </select>
+  <button class="btn" id="statsBtn" title="지원자 통계 (숨김 제외)">통계</button>
   </div>
   <div class="tb-right">
   <span class="stat sync" id="syncStat" hidden></span>
   <input type="text" id="who" placeholder="내 이름 (심사 기록용)" hidden>
-  <button class="btn" id="statsBtn" title="지원자 통계 (숨김 제외)">통계</button>
   <details class="filters" id="filters">
     <summary class="btn" title="숨김 포함 · 검토 필요만">필터</summary>
     <div class="pop">
@@ -2006,13 +2019,13 @@ const REGIONS = [['서울', /^서울/], ['경기', /^경기|^(수원|성남|고�
   ['경남', /^경(상)?남|^(창원|김해|진주|양산|거제|통영|사천|밀양)/], ['제주', /^제주|^서귀포/]];
 const regionOf = addr => { const t = norm(addr).replace(/\s+/g, ''); const r = REGIONS.find(([, re]) => re.test(t)); return r ? r[0] : '기타·미기재'; };
 const countBy = (list, f) => { const m = new Map(); list.forEach(a => { const k = f(a); if (k) m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].sort((x, y) => y[1] - x[1] || String(x[0]).localeCompare(String(y[0]), 'ko')); };
-const topN = (arr, n) => arr.length <= n ? arr : [...arr.slice(0, n), ['기타 ' + (arr.length - n) + '곳', arr.slice(n).reduce((s, x) => s + x[1], 0)]];
+const topN = (arr, n, unit = '개') => arr.length <= n ? arr : [...arr.slice(0, n), [`그 외 ${arr.length - n}${unit}`, arr.slice(n).reduce((s, x) => s + x[1], 0)]];
 function barList(rows, total, opts = {}) {
   if (!rows.length) return '<div class="note">해당 없음</div>';
   const max = Math.max(...rows.map(r => r[1]));
   return `<div class="blist ${opts.long ? 'long' : ''}">${rows.map(([k, n]) => {
     const pct = total ? Math.round(n / total * 100) : 0;
-    const q = opts.click && !/^기타/.test(k) ? opts.click(k) : '';
+    const q = opts.click && !/^그 외/.test(k) ? opts.click(k) : '';
     return `<div class="brow ${q ? 'click' : ''}" ${q ? `data-q="${esc(q)}"` : ''} title="${esc(k)} · ${n}명 (${pct}%)${q ? ' — 누르면 목록에서 보기' : ''}">
       <span class="bl">${esc(k)}</span><span class="bt"><span class="bf" style="width:${(n / max * 100).toFixed(1)}%;display:block"></span></span><span class="bn">${n}<small>${pct}%</small></span></div>`;
   }).join('')}</div>`;
@@ -2028,6 +2041,27 @@ function dailyCols(list) {
   return `<div class="cols">${out.map(([dt, n], i) => `<div class="c" title="${dayLabel(dt)} · ${n}명"><i style="height:${max ? n / max * 100 : 0}%"></i>${(i === maxI || i === lastI) && n ? `<b style="bottom:calc(${n / max * 100}% + 2px)">${n}</b>` : ''}</div>`).join('')}</div>
     <div class="cols-x">${out.map(([dt], i) => `<span>${i % step === 0 || i === lastI ? `${dt.getMonth() + 1}/${dt.getDate()}` : ''}</span>`).join('')}</div>`;
 }
+// 학교 비중 원형 그래프: 상위 5곳 + 그 외 (조각 6개 이하, 색은 순서 고정)
+const DONUT_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'], DONUT_REST = '#d6d3d1';
+function donut(rows, total) {
+  if (!total) return '<div class="note">해당 없음</div>';
+  const top = rows.filter(r => !/미기재/.test(r[0])).slice(0, 5);
+  const restN = total - top.reduce((s, r) => s + r[1], 0);
+  const segs = [...top.map((r, i) => [r[0], r[1], DONUT_COLORS[i], true]), ...(restN ? [[`그 외 ${rows.length - top.length}곳`, restN, DONUT_REST, false]] : [])];
+  const R = 70, C = 90, W = 30;
+  let a0 = -Math.PI / 2;
+  const arcs = segs.map(([k, n, col]) => {
+    const a1 = a0 + n / total * Math.PI * 2, gap = segs.length > 1 ? 0.012 : 0;
+    const s0 = a0 + gap, s1 = Math.max(s0 + 0.001, a1 - gap), big = s1 - s0 > Math.PI ? 1 : 0;
+    const P = a => `${(C + R * Math.cos(a)).toFixed(2)} ${(C + R * Math.sin(a)).toFixed(2)}`;
+    const d = segs.length === 1 ? `M ${C} ${C - R} A ${R} ${R} 0 1 1 ${C - 0.01} ${C - R}` : `M ${P(s0)} A ${R} ${R} 0 ${big} 1 ${P(s1)}`;
+    a0 = a1;
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${W}"><title>${esc(k)} · ${n}명 (${Math.round(n / total * 100)}%)</title></path>`;
+  }).join('');
+  return `<div class="donut"><svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="학교별 비중">${arcs}
+      <text x="90" y="88" text-anchor="middle" class="dn">${total}</text><text x="90" y="108" text-anchor="middle" class="dl">명</text></svg>
+    <div class="dleg">${segs.map(([k, n, col, click]) => `<div class="dli ${click ? 'click' : ''}" ${click ? `data-q="${esc(k)}"` : ''} title="${esc(k)} · ${n}명"><i style="background:${col}"></i><span>${esc(k)}</span><b>${n}<small>${Math.round(n / total * 100)}%</small></b></div>`).join('')}</div></div>`;
+}
 function renderStats() {
   const ov = document.getElementById('stats'); if (!ov || !DATA) return;
   const valid = DATA.list.filter(a => !isHidden(a)), N = valid.length;
@@ -2040,8 +2074,8 @@ function renderStats() {
   const nextSchools = countBy(incoming, a => /고등학교|고$|예고/.test(norm(a.nextSchool)) ? canonSchool(a.nextSchool) : '진학 학교 미기재');
   const grades = countBy(valid, a => a.gradeN || '미기재').sort((x, y) => { const i = k => { const n = GRADE_ORDER.indexOf(k); return n < 0 ? 99 : n; }; return i(x[0]) - i(y[0]); }).map(([k, n]) => [k.replace(' (2027 입학 예정)', ' (입학 예정)'), n]);
   const years = countBy(valid, a => a.b ? a.b.y + '년생' : '미기재').sort((x, y) => String(x[0]).localeCompare(String(y[0])));
-  const fields = topN(countBy(valid, a => { const t = norm(a.field || a.dept).replace(/\s+/g, ' '); return /[가-힣a-z]/i.test(t) ? t : '미기재'; }), 12);
-  const countries = topN(countBy(foreign, a => { const t = norm(a.nationality).split(/[,/;·&]/)[0].trim(); return t ? t[0].toUpperCase() + t.slice(1).toLowerCase() : '미기재'; }), 10);
+  const fields = topN(countBy(valid, a => { const t = norm(a.field || a.dept).replace(/\s+/g, ' '); return /[가-힣a-z]/i.test(t) ? t : '미기재'; }), 12, '개 분야');
+  const countries = topN(countBy(foreign, a => { const t = norm(a.nationality).split(/[,/;·&]/)[0].trim(); return t ? t[0].toUpperCase() + t.slice(1).toLowerCase() : '미기재'; }), 10, '개국');
   const regions = countBy(dom, a => regionOf(a.address));
   const schoolQ = k => /미기재/.test(k) ? '' : k;
   ov.querySelector('.sbody').innerHTML = `
@@ -2052,6 +2086,7 @@ function renderStats() {
       <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">학교 ${schools.length}곳</div></div>
     </div>
     <div class="sgrid" style="padding:14px 0 0">
+      <div class="card"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 5곳</div>${donut(schools, enrolled.length)}</div>
       <div class="card tall"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
       <div class="card"><h3>2027 입학 예정자의 진학 예정 학교</h3><div class="cap">중3 ${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
       <div class="card"><h3>학년</h3><div class="cap">전체 ${N}명</div>${barList(grades, N)}</div>
