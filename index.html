@@ -881,13 +881,21 @@ function loadThumb(id) {
   });
   return thumbWait[id];
 }
+// 못 받은 사진은 잠시 뒤 다시 시도 (새 지원자는 서버의 사진 목록이 갱신될 때까지 몇 분 걸릴 수 있음)
+const thumbTries = {};
+function retryThumb(id) {
+  delete thumbWait[id];
+  const n = thumbTries[id] = (thumbTries[id] || 0) + 1;
+  if (n <= 8) setTimeout(() => { if (!IMG[id]) loadThumb(id); }, Math.min(30000 * n, 180000));
+}
 function pumpThumbs() {
   while (thumbBusy < 6 && thumbQueue.length) {
     const [id, res] = thumbQueue.shift(); thumbBusy++;
     call('getThumb', id, 800).then(d => {
       if (d && d.content) { const uri = `data:${d.mimeType};base64,${d.content}`; showThumb(id, uri); idb.set('800:' + id, uri); }
+      if (!IMG[id]) retryThumb(id);
       res(IMG[id] || null);
-    }).catch(() => { delete thumbWait[id]; res(null); }).finally(() => { thumbBusy--; pumpThumbs(); });
+    }).catch(() => { retryThumb(id); res(null); }).finally(() => { thumbBusy--; pumpThumbs(); });
   }
 }
 // 첫 화면이 뜬 뒤 나머지 사진도 뒤에서 미리 받아 둠 (보이는 것 먼저 받고 나서)
