@@ -536,6 +536,55 @@ body::before { background: #141416 !important; }
   .logbox .mfoot { flex-wrap: wrap; }
   .logtbl .c4 { max-width: 240px; }
 }
+
+/* ===================== 통계 화면 ===================== */
+.stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
+.stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
+.stats .sbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 12px max(20px, env(safe-area-inset-right, 0px)) 12px max(20px, env(safe-area-inset-left, 0px)); background: #e8e5e0; }
+.stats .sbar h2 { margin: 0; font-size: 18px; font-weight: 800; }
+.stats .sbar .note { font-size: 13px; }
+.stats .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; padding: 4px 20px 40px; max-width: 1400px; }
+.stats .card { background: #fff; border-radius: 14px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.06); min-width: 0; }
+.stats .card.wide { grid-column: 1 / -1; }
+.stats .card.tall { grid-row: span 2; }
+.stats .card h3 { margin: 0 0 2px; font-size: 15px; font-weight: 800; }
+.stats .card .cap { font-size: 12px; color: var(--ink-2); margin-bottom: 12px; }
+.stats .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+.stats .tile { background: #fff; border-radius: 14px; padding: 14px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.stats .tile .k { font-size: 12.5px; color: var(--ink-2); }
+.stats .tile .v { font-size: 30px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.stats .tile .v small { font-size: 14px; font-weight: 600; color: var(--ink-2); margin-left: 2px; }
+.stats .tile .d { font-size: 12px; color: var(--ink-2); }
+/* 막대 목록: 이름 | 막대 | 숫자 */
+.blist { display: flex; flex-direction: column; gap: 2px; }
+.brow { display: grid; grid-template-columns: minmax(0, 38%) minmax(40px, 1fr) 4.6em; align-items: center; gap: 10px; padding: 5px 6px; border-radius: 6px; font-size: 13.5px; }
+.brow.click { cursor: pointer; }
+.brow:hover { background: #f6f4f1; }
+.brow .bl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brow .bt { height: 10px; background: #f3f1ee; border-radius: 0 4px 4px 0; }
+.brow .bf { height: 100%; background: #e11d48; border-radius: 0 4px 4px 0; min-width: 2px; }
+.brow .bn { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.brow .bn small { font-weight: 400; color: var(--ink-2); margin-left: 4px; }
+.blist.long .brow { grid-template-columns: minmax(0, 50%) minmax(40px, 1fr) 4.6em; }
+/* 일별 접수: 세로 막대 */
+.cols { display: flex; align-items: flex-end; gap: 2px; height: 150px; border-bottom: 1px solid #d6d3ce; padding-top: 18px; }
+.cols .c { flex: 1; min-width: 3px; position: relative; height: 100%; display: flex; align-items: flex-end; }
+.cols .c i { display: block; width: 100%; background: #e11d48; border-radius: 4px 4px 0 0; min-height: 2px; }
+.cols .c:hover i { background: #be123c; }
+.cols .c b { position: absolute; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.cols-x { display: flex; gap: 2px; font-size: 11px; color: var(--ink-2); margin-top: 4px; }
+.cols-x span { flex: 1; min-width: 3px; text-align: center; white-space: nowrap; overflow: visible; }
+body.stats-open { overflow: hidden; }
+.topbar #statsBtn.on { border-color: #fb7185 !important; color: #fb7185 !important; }
+@media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) {
+  .stats .sgrid { grid-template-columns: minmax(0, 1fr); padding: 4px 10px 30px; gap: 10px; }
+  .stats .sbar { padding: 10px 12px; }
+  .stats .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stats .tile .v { font-size: 26px; }
+  .brow, .blist.long .brow { grid-template-columns: minmax(0, 46%) minmax(40px, 1fr) 4.4em; font-size: 14px; }
+  .stats .card.tall { grid-row: auto; }
+}
+@media print { .stats { display: none !important; } }
 </style>
 
 <div class="topbar">
@@ -555,6 +604,7 @@ body::before { background: #141416 !important; }
   <div class="tb-right">
   <span class="stat sync" id="syncStat" hidden></span>
   <input type="text" id="who" placeholder="내 이름 (심사 기록용)" hidden>
+  <button class="btn" id="statsBtn" title="지원자 통계 (숨김 제외)">통계</button>
   <details class="filters" id="filters">
     <summary class="btn" title="숨김 포함 · 검토 필요만">필터</summary>
     <div class="pop">
@@ -1135,7 +1185,7 @@ function visibleList() {
   return DATA.list.filter(a => {
     if (!$('#showHidden').checked && isHidden(a)) return false;
     if ($('#onlyWarn').checked && !needsReview(a)) return false;
-    if (q && !compact([a.name, a.school, a.field, a.dept, a.address, a.nextSchool].join(' ')).includes(q)) return false;
+    if (q && !compact([a.name, a.school, canonSchool(a.school), a.field, a.dept, a.address, a.nextSchool, canonSchool(a.nextSchool)].join(' ')).includes(q)) return false;
     return true;
   });
 }
@@ -1552,6 +1602,7 @@ function render() {
   $('#groupSel').value = groupBy;
   const gs = groups(visibleList());
   renderStat(); renderSide(gs); renderMain(gs); hydrateThumbs();
+  if (document.getElementById('stats')) renderStats();
 }
 
 // ===================== 불러오기 화면 =====================
@@ -1682,13 +1733,12 @@ function updateWatermark() {
   b.hidden = !(WEB && VIEWER && VIEWER.toLowerCase() === ADMIN);
   b.textContent = wmOn() ? '워터마크 켜짐' : '워터마크 꺼짐'; b.classList.toggle('on', wmOn());
 }
-// 접속 IP를 워터마크에 덧붙임 (공인 IP 조회: api.ipify.org, 3초 안에 안 오면 IP 없이) + 활동 기록에 남김
+// 접속 IP를 활동 기록에만 남김 (공인 IP 조회: api.ipify.org, 3초 안에 안 오면 생략)
 function addIpToWatermark(viewer, now) {
   const ctl = new AbortController(); setTimeout(() => ctl.abort(), 3000);
   fetch('https://api.ipify.org?format=json', { credentials: 'omit', signal: ctl.signal }).then(r => r.json()).then(j => {
     const ip = String(j && j.ip || '').replace(/[^0-9a-fA-F.:]/g, '').slice(0, 45); if (!ip) return;
-    WM_TEXT = `${viewer} · ${ip} · ${now} · 대외비`; updateWatermark();
-    logEv('접속', '', 'IP ' + ip);
+    logEv('접속', '', 'IP ' + ip);   // IP는 워터마크에 넣지 않고 활동 기록에만
   }).catch(() => {});
 }
 // A4 한 장 크기(794×1123) 그림 하나에 문구를 비스듬히 촘촘하게 직접 배치 (반복·회전 없이 → 화면과 인쇄가 똑같음)
@@ -1948,6 +1998,91 @@ $('#mPrev').onclick = $('#mPrev2').onclick = () => stepMobile(-1);
 $('#mNext').onclick = $('#mNext2').onclick = () => stepMobile(1);
 // 화면 폭이 휴대폰 ↔ 컴퓨터로 바뀌면(회전 등) 다시 그림
 MOBILE_Q.addEventListener('change', () => { if (!isMobile()) { document.body.classList.remove('m-detail'); } if (DATA) rerender(); });
+
+// ===================== 통계 (숨김 제외) =====================
+const REGIONS = [['서울', /^서울/], ['경기', /^경기|^(수원|성남|고양|용인|부천|안산|안양|남양주|화성|평택|의정부|시흥|파주|김포|광명|광주시|군포|하남|오산|이천|양주|구리|안성|포천|의왕|여주|동두천|과천|가평|양평|연천)/], ['인천', /^인천/], ['부산', /^부산/],
+  ['대구', /^대구/], ['광주', /^광주/], ['대전', /^대전/], ['울산', /^울산/], ['세종', /^세종/], ['강원', /^강원|^(춘천|원주|강릉|속초)/], ['충북', /^충(청)?북|^(청주|충주|제천)/],
+  ['충남', /^충(청)?남|^(천안|아산|서산|당진|공주|논산)/], ['전북', /^전(라)?북|^전북|^(전주|익산|군산|정읍|남원|김제)/], ['전남', /^전(라)?남|^(목포|여수|순천|광양|나주)/], ['경북', /^경(상)?북|^(포항|경주|구미|안동|김천|영주|경산)/],
+  ['경남', /^경(상)?남|^(창원|김해|진주|양산|거제|통영|사천|밀양)/], ['제주', /^제주|^서귀포/]];
+const regionOf = addr => { const t = norm(addr).replace(/\s+/g, ''); const r = REGIONS.find(([, re]) => re.test(t)); return r ? r[0] : '기타·미기재'; };
+const countBy = (list, f) => { const m = new Map(); list.forEach(a => { const k = f(a); if (k) m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].sort((x, y) => y[1] - x[1] || String(x[0]).localeCompare(String(y[0]), 'ko')); };
+const topN = (arr, n) => arr.length <= n ? arr : [...arr.slice(0, n), ['기타 ' + (arr.length - n) + '곳', arr.slice(n).reduce((s, x) => s + x[1], 0)]];
+function barList(rows, total, opts = {}) {
+  if (!rows.length) return '<div class="note">해당 없음</div>';
+  const max = Math.max(...rows.map(r => r[1]));
+  return `<div class="blist ${opts.long ? 'long' : ''}">${rows.map(([k, n]) => {
+    const pct = total ? Math.round(n / total * 100) : 0;
+    const q = opts.click && !/^기타/.test(k) ? opts.click(k) : '';
+    return `<div class="brow ${q ? 'click' : ''}" ${q ? `data-q="${esc(q)}"` : ''} title="${esc(k)} · ${n}명 (${pct}%)${q ? ' — 누르면 목록에서 보기' : ''}">
+      <span class="bl">${esc(k)}</span><span class="bt"><span class="bf" style="width:${(n / max * 100).toFixed(1)}%;display:block"></span></span><span class="bn">${n}<small>${pct}%</small></span></div>`;
+  }).join('')}</div>`;
+}
+function dailyCols(list) {
+  const days = list.map(a => a.ts).filter(Boolean).sort((x, y) => x - y);
+  if (!days.length) return '<div class="note">해당 없음</div>';
+  const cnt = new Map(); list.forEach(a => { if (a.ts) { const k = dayKey(a.ts); cnt.set(k, (cnt.get(k) || 0) + 1); } });
+  const out = [], d = new Date(days[0].getFullYear(), days[0].getMonth(), days[0].getDate()), end = new Date();
+  for (; d <= end; d.setDate(d.getDate() + 1)) out.push([new Date(d), cnt.get(dayKey(d)) || 0]);
+  const max = Math.max(...out.map(x => x[1])), step = Math.max(1, Math.ceil(out.length / 10));
+  const maxI = out.findIndex(x => x[1] === max), lastI = out.length - 1;
+  return `<div class="cols">${out.map(([dt, n], i) => `<div class="c" title="${dayLabel(dt)} · ${n}명"><i style="height:${max ? n / max * 100 : 0}%"></i>${(i === maxI || i === lastI) && n ? `<b style="bottom:calc(${n / max * 100}% + 2px)">${n}</b>` : ''}</div>`).join('')}</div>
+    <div class="cols-x">${out.map(([dt], i) => `<span>${i % step === 0 || i === lastI ? `${dt.getMonth() + 1}/${dt.getDate()}` : ''}</span>`).join('')}</div>`;
+}
+function renderStats() {
+  const ov = document.getElementById('stats'); if (!ov || !DATA) return;
+  const valid = DATA.list.filter(a => !isHidden(a)), N = valid.length;
+  const hidN = DATA.list.length - N;
+  const foreign = valid.filter(a => natInfo(a.nationality).foreign), dom = valid.filter(a => !natInfo(a.nationality).foreign);
+  const incoming = dom.filter(isIncoming), enrolled = dom.filter(a => !isIncoming(a));
+  const today = dayKey(new Date()), wk = Date.now() - 7 * 864e5;
+  const todayN = valid.filter(a => dayKey(a.ts) === today).length, weekN = valid.filter(a => a.ts && a.ts.getTime() >= wk).length;
+  const schools = countBy(enrolled, a => canonSchool(a.school) || '학교 미기재');
+  const nextSchools = countBy(incoming, a => /고등학교|고$|예고/.test(norm(a.nextSchool)) ? canonSchool(a.nextSchool) : '진학 학교 미기재');
+  const grades = countBy(valid, a => a.gradeN || '미기재').sort((x, y) => { const i = k => { const n = GRADE_ORDER.indexOf(k); return n < 0 ? 99 : n; }; return i(x[0]) - i(y[0]); }).map(([k, n]) => [k.replace(' (2027 입학 예정)', ' (입학 예정)'), n]);
+  const years = countBy(valid, a => a.b ? a.b.y + '년생' : '미기재').sort((x, y) => String(x[0]).localeCompare(String(y[0])));
+  const fields = topN(countBy(valid, a => { const t = norm(a.field || a.dept).replace(/\s+/g, ' '); return /[가-힣a-z]/i.test(t) ? t : '미기재'; }), 12);
+  const countries = topN(countBy(foreign, a => { const t = norm(a.nationality).split(/[,/;·&]/)[0].trim(); return t ? t[0].toUpperCase() + t.slice(1).toLowerCase() : '미기재'; }), 10);
+  const regions = countBy(dom, a => regionOf(a.address));
+  const schoolQ = k => /미기재/.test(k) ? '' : k;
+  ov.querySelector('.sbody').innerHTML = `
+    <div class="tiles">
+      <div class="tile"><div class="k">지원자 (숨김 제외)</div><div class="v">${N}<small>명</small></div><div class="d">숨김 ${hidN}명 제외</div></div>
+      <div class="tile"><div class="k">오늘 / 최근 7일</div><div class="v">${todayN}<small>명</small> <small>/ ${weekN}명</small></div><div class="d">접수 시각 기준</div></div>
+      <div class="tile"><div class="k">국내 / 해외</div><div class="v">${dom.length}<small>명</small> <small>/ ${foreign.length}명</small></div><div class="d">국적 기준 (복수국적은 국내)</div></div>
+      <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">학교 ${schools.length}곳</div></div>
+    </div>
+    <div class="sgrid" style="padding:14px 0 0">
+      <div class="card tall"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
+      <div class="card"><h3>2027 입학 예정자의 진학 예정 학교</h3><div class="cap">중3 ${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
+      <div class="card"><h3>학년</h3><div class="cap">전체 ${N}명</div>${barList(grades, N)}</div>
+      <div class="card"><h3>출생연도</h3><div class="cap">전체 ${N}명</div>${barList(years, N)}</div>
+      <div class="card"><h3>지원 분야 (적어 낸 그대로)</h3><div class="cap">전체 ${N}명 · 많은 순</div>${barList(fields, N, { long: true })}</div>
+      <div class="card"><h3>거주 지역 (국내)</h3><div class="cap">국내 ${dom.length}명 · 주소 기준</div>${barList(regions, dom.length)}</div>
+      <div class="card"><h3>해외 지원자 국적</h3><div class="cap">해외 ${foreign.length}명</div>${barList(countries, foreign.length)}</div>
+      <div class="card wide"><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div>${dailyCols(valid)}</div>
+    </div>`;
+  ov.querySelector('.sbar .note').textContent = `숨김 제외 ${N}명 · 수집 ${COLLECTED || hhmm()}`;
+}
+function openStats() {
+  if (!DATA) return;
+  let ov = document.getElementById('stats');
+  if (!ov) {
+    ov = document.createElement('div'); ov.id = 'stats'; ov.className = 'stats';
+    ov.innerHTML = `<div class="sbar"><h2>지원자 통계</h2><span class="note"></span><span class="spacer"></span><button class="btn" data-sclose>닫기 ✕</button></div><div class="sgrid" style="display:block"><div class="sbody"></div></div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => {
+      if (e.target.closest('[data-sclose]')) { closeStats(); return; }
+      const r = e.target.closest('[data-q]');
+      if (r) { closeStats(); $('#q').value = r.dataset.q; render(); window.scrollTo(0, 0); }
+    });
+    logEv('통계 열람');
+  }
+  document.body.classList.add('stats-open'); $('#statsBtn').classList.add('on');
+  renderStats();
+}
+function closeStats() { const ov = document.getElementById('stats'); if (ov) ov.remove(); document.body.classList.remove('stats-open'); $('#statsBtn').classList.remove('on'); }
+$('#statsBtn').onclick = () => document.getElementById('stats') ? closeStats() : openStats();
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('stats')) closeStats(); });
 // 숨김·승인 동작 (지원서 안 버튼과 사이드바 ⋯ 메뉴가 같이 씀)
 function applyAct(key, act) {
   const a = DATA.list.find(x => x.key === key); if (!a) return;
