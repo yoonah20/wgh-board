@@ -405,19 +405,22 @@ body::before { background: #141416 !important; }
 .filters:has(input:checked) > summary { border-color: #fb7185 !important; color: #fb7185 !important; }
 .filters .pop { color: var(--ink); background: #fff; }
 .filters .pop input { accent-color: #e11d48; }
-.layout { grid-template-columns: 400px 1fr; }
+.layout { grid-template-columns: 340px 1fr; }
 .side { background: #efece7 !important; border-right: 0 !important; padding: 4px 0 24px; }
 .group-h { background: #efece7 !important; border: 0 !important; font-size: 13px; color: #57534e; padding: 12px 18px 6px; }
 .group-h span { color: #8a837b; }
-.item { margin: 6px 12px; padding: 12px; border-radius: 14px; background: #fff; border: 0 !important; box-shadow: 0 1px 2px rgba(0,0,0,.06); gap: 14px; }
+.item { margin: 6px 10px; padding: 10px; border-radius: 12px; background: #fff; border: 0 !important; box-shadow: 0 1px 2px rgba(0,0,0,.06); gap: 12px; align-items: stretch; }
 .item:hover { background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.10); }
 .item.sel { background: #fff; box-shadow: 0 0 0 2px #e11d48; }
 .item.hidden-row { opacity: .55; }
-.thumb { width: 92px; height: 122px; border-radius: 10px; }
-.item .nm { font-size: 16px; font-weight: 800; }
-.item .sub { font-size: 12.5px; }
-.item .sum { border: 0 !important; background: #f6f4f1; border-radius: 8px; opacity: 1; color: #57534e; }
-.heart { min-width: 92px; padding: 5px 0; font-size: 13px; border-color: #f1d5dc; background: #fff; }
+.thumb { width: 66px; height: 88px; border-radius: 8px; }
+.thumb-col { justify-content: space-between; }   /* 하트 아래 끝을 요약 상자 아래 끝에 맞춤 */
+.item .nm { font-size: 15px; font-weight: 800; line-height: 1.35; }
+.item .sub { font-size: 12px; line-height: 1.45; }
+/* AI 요약: 항상 3줄 높이 (모자라면 빈칸, 넘치면 …) → 카드 높이가 모두 같음 */
+.item .sum { border: 0 !important; background: #f6f4f1; border-radius: 7px; opacity: 1; color: #57534e; font-size: 11.5px; line-height: 1.45;
+  padding: 4px 8px; margin-top: 5px; height: calc(3 * 1.45em + 8px); -webkit-line-clamp: 3; }
+.heart { min-width: 66px; padding: 3px 0; font-size: 12px; border-color: #f1d5dc; background: #fff; }
 .heart:hover { border-color: #e11d48; color: #e11d48; }
 .heart.on { background: #ffe4ea; color: #e11d48; border-color: #fecdd6; }
 .more { top: 10px; right: 10px; }
@@ -429,7 +432,7 @@ body::before { background: #141416 !important; }
 .viewer { background: rgba(20,20,22,.94); }
 .viewer .vbar { background: #141416; }
 .login h2 { font-weight: 800; }
-@media screen and (max-width: 1300px) { .layout { grid-template-columns: 340px 1fr; } .thumb { width: 76px; height: 101px; } .heart { min-width: 76px; } }
+@media screen and (max-width: 1300px) { .layout { grid-template-columns: 310px 1fr; } }
 </style>
 
 <div class="topbar">
