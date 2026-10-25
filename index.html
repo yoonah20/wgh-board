@@ -579,6 +579,14 @@ body::before { background: #141416 !important; }
 .dli span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dli b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dli b small { font-weight: 400; color: var(--ink-2); margin-left: 4px; }
+/* 통계 배치: 왼쪽 학교 비중·입학 예정 | 학교별 목록 | 학년·출생연도 | 거주 지역, 맨 아래 일별 접수 */
+.stats .slay { display: grid; gap: 14px; padding-top: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start;
+  grid-template-areas: "donut list age region" "next list age region" "daily daily daily daily"; }
+.stats .slay > .card { align-self: stretch; }
+.a-donut { grid-area: donut; } .a-list { grid-area: list; } .a-next { grid-area: next; } .a-age { grid-area: age; }
+.a-region { grid-area: region; } .a-daily { grid-area: daily; }
+@media screen and (max-width: 1200px) { .stats .slay { grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas: "donut list" "next list" "age region" "daily daily"; } }
 /* 일별 접수: 세로 막대 */
 .cols { display: flex; align-items: flex-end; gap: 2px; height: 150px; border-bottom: 1px solid #d6d3ce; padding-top: 18px; }
 .cols .c { flex: 1; min-width: 3px; position: relative; height: 100%; display: flex; align-items: flex-end; }
@@ -596,6 +604,7 @@ body.stats-open { overflow: hidden; }
   .stats .tile .v { font-size: 26px; }
   .brow, .blist.long .brow { grid-template-columns: minmax(0, 46%) minmax(40px, 1fr) 4.4em; font-size: 14px; }
   .stats .card.tall { grid-row: auto; }
+  .stats .slay { grid-template-columns: minmax(0, 1fr); grid-template-areas: "donut" "list" "next" "age" "region" "daily"; gap: 10px; padding-top: 10px; }
 }
 @media print { .stats { display: none !important; } }
 </style>
@@ -2066,7 +2075,7 @@ function renderStats() {
   const ov = document.getElementById('stats'); if (!ov || !DATA) return;
   const valid = DATA.list.filter(a => !isHidden(a)), N = valid.length;
   const hidN = DATA.list.length - N;
-  const foreign = valid.filter(a => natInfo(a.nationality).foreign), dom = valid.filter(a => !natInfo(a.nationality).foreign);
+  const dom = valid.filter(a => !natInfo(a.nationality).foreign);
   const incoming = dom.filter(isIncoming), enrolled = dom.filter(a => !isIncoming(a));
   const today = dayKey(new Date()), wk = Date.now() - 7 * 864e5;
   const todayN = valid.filter(a => dayKey(a.ts) === today).length, weekN = valid.filter(a => a.ts && a.ts.getTime() >= wk).length;
@@ -2074,27 +2083,23 @@ function renderStats() {
   const nextSchools = countBy(incoming, a => /고등학교|고$|예고/.test(norm(a.nextSchool)) ? canonSchool(a.nextSchool) : '진학 학교 미기재');
   const grades = countBy(valid, a => a.gradeN || '미기재').sort((x, y) => { const i = k => { const n = GRADE_ORDER.indexOf(k); return n < 0 ? 99 : n; }; return i(x[0]) - i(y[0]); }).map(([k, n]) => [k.replace(' (2027 입학 예정)', ' (입학 예정)'), n]);
   const years = countBy(valid, a => a.b ? a.b.y + '년생' : '미기재').sort((x, y) => String(x[0]).localeCompare(String(y[0])));
-  const fields = topN(countBy(valid, a => { const t = norm(a.field || a.dept).replace(/\s+/g, ' '); return /[가-힣a-z]/i.test(t) ? t : '미기재'; }), 12, '개 분야');
-  const countries = topN(countBy(foreign, a => { const t = norm(a.nationality).split(/[,/;·&]/)[0].trim(); return t ? t[0].toUpperCase() + t.slice(1).toLowerCase() : '미기재'; }), 10, '개국');
   const regions = countBy(dom, a => regionOf(a.address));
   const schoolQ = k => /미기재/.test(k) ? '' : k;
   ov.querySelector('.sbody').innerHTML = `
     <div class="tiles">
       <div class="tile"><div class="k">지원자 (숨김 제외)</div><div class="v">${N}<small>명</small></div><div class="d">숨김 ${hidN}명 제외</div></div>
       <div class="tile"><div class="k">오늘 / 최근 7일</div><div class="v">${todayN}<small>명</small> <small>/ ${weekN}명</small></div><div class="d">접수 시각 기준</div></div>
-      <div class="tile"><div class="k">국내 / 해외</div><div class="v">${dom.length}<small>명</small> <small>/ ${foreign.length}명</small></div><div class="d">국적 기준 (복수국적은 국내)</div></div>
-      <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">학교 ${schools.length}곳</div></div>
+      <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">국내 지원자 기준</div></div>
+      <div class="tile"><div class="k">지원 학교</div><div class="v">${schools.filter(r => !/미기재/.test(r[0])).length}<small>곳</small></div><div class="d">국내 재학생의 재학 학교</div></div>
     </div>
-    <div class="sgrid" style="padding:14px 0 0">
-      <div class="card"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 5곳</div>${donut(schools, enrolled.length)}</div>
-      <div class="card tall"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
-      <div class="card"><h3>2027 입학 예정자의 진학 예정 학교</h3><div class="cap">중3 ${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
-      <div class="card"><h3>학년</h3><div class="cap">전체 ${N}명</div>${barList(grades, N)}</div>
-      <div class="card"><h3>출생연도</h3><div class="cap">전체 ${N}명</div>${barList(years, N)}</div>
-      <div class="card"><h3>지원 분야 (적어 낸 그대로)</h3><div class="cap">전체 ${N}명 · 많은 순</div>${barList(fields, N, { long: true })}</div>
-      <div class="card"><h3>거주 지역 (국내)</h3><div class="cap">국내 ${dom.length}명 · 주소 기준</div>${barList(regions, dom.length)}</div>
-      <div class="card"><h3>해외 지원자 국적</h3><div class="cap">해외 ${foreign.length}명</div>${barList(countries, foreign.length)}</div>
-      <div class="card wide"><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div>${dailyCols(valid)}</div>
+    <div class="slay">
+      <div class="card a-donut"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 5곳</div>${donut(schools, enrolled.length)}</div>
+      <div class="card a-list"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
+      <div class="card a-next"><h3>입학 예정자(중3)의 진학 예정 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
+      <div class="card a-age"><h3>학년</h3><div class="cap">전체 ${N}명</div>${barList(grades, N)}
+        <h3 style="margin-top:22px">출생연도</h3><div class="cap">전체 ${N}명</div>${barList(years, N)}</div>
+      <div class="card a-region"><h3>거주 지역</h3><div class="cap">국내 ${dom.length}명 · 주소 기준</div>${barList(regions, dom.length)}</div>
+      <div class="card a-daily"><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div>${dailyCols(valid)}</div>
     </div>`;
   ov.querySelector('.sbar .note').textContent = `숨김 제외 ${N}명 · 수집 ${COLLECTED || hhmm()}`;
 }
