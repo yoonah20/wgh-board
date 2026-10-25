@@ -1564,7 +1564,7 @@ function addIpToWatermark(viewer, now) {
   const ctl = new AbortController(); setTimeout(() => ctl.abort(), 3000);
   fetch('https://api.ipify.org?format=json', { credentials: 'omit', signal: ctl.signal }).then(r => r.json()).then(j => {
     const ip = String(j && j.ip || '').replace(/[^0-9a-fA-F.:]/g, '').slice(0, 45); if (!ip) return;
-    WM_TEXT = `${viewer} · IP ${ip} · ${now} · 대외비`; updateWatermark();
+    WM_TEXT = `${viewer} · ${ip} · ${now} · 대외비`; updateWatermark();
     logEv('접속', '', 'IP ' + ip);
   }).catch(() => {});
 }
