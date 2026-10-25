@@ -538,7 +538,7 @@ body::before { background: #141416 !important; }
 }
 
 /* 연락 상태 · 중복 · 영상 · 필터 */
-.contact { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; margin: -6px 0 10px; font-size: 12px; }
+.contact { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ccc; font-size: 12px; flex: none; }
 .contact .cl { color: #666; margin-right: 2px; }
 .cbtn { border: 1px solid #bbb; background: #fff; color: #333; border-radius: 99px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
 .cbtn:hover { border-color: #e11d48; }
@@ -1361,7 +1361,7 @@ function sideSchool(a) {
   if (/중학교|중$/.test(norm(a.school)) && /고등학교|고$|예고/.test(norm(a.nextSchool))) return `${canonSchool(a.nextSchool)} (예정)`;
   return a.school;
 }
-// 연락 상태 버튼 (지원서 1쪽 머리말 아래, 인쇄 안 됨)
+// 연락 상태 버튼 (지원서 1쪽 맨 아래, 인쇄 안 됨)
 const contactRow = a => `<div class="contact no-print">${['', ...CONTACTS].map(v => `<button class="cbtn ${(contacts[a.key] || '') === v ? 'on' : ''}" data-contact="${v}">${v || '연락 전'}</button>`).join('')}</div>`;
 function stageBadge(a) {
   const s = signs[a.key] || {}; const last = [...STAGES].reverse().find(t => s[t]);
@@ -1512,7 +1512,7 @@ function paginate(secEl) {
       <div class="sheet-top">
         <div class="ttl">${titleHtml(SHEET_TITLE)}</div>
         <div class="meta">지원번호 <b>${a.no}</b><br>접수 ${esc(fmtTs(a.ts) || a.timestamp)}<br>시트 ${a.row}행<span class="pg-dot"> · </span><span data-pg></span></div>
-      </div>${contactRow(a)}<div class="body"></div><div class="foot">${a.no} · ${esc(a.name)} · <span data-pg></span></div>`
+      </div><div class="body"></div>${contactRow(a)}<div class="foot">${a.no} · ${esc(a.name)} · <span data-pg></span></div>`
       : `<div class="body"></div><div class="foot">${a.no} · ${esc(a.name)} · <span data-pg></span></div>`);
     secEl.appendChild(pg); pages.push(pg);
     body = pg.querySelector('.body');
