@@ -1162,24 +1162,19 @@ function natInfo(s) {
   return { foreign: !kr.length, dual: kr.length > 0 && parts.length > kr.length };
 }
 function classify(list, headers, map) {
-  // 중복 지원: 전화번호 · 이메일 · (한글 이름 + 생년월일) 중 하나라도 같으면 같은 사람으로 묶음 → 한 건만 표시 (번호 있는 것 → 최근 것)
+  // 중복 지원: 전화번호 · 이메일 · (한글 이름 + 생년월일) 중 하나라도 같으면 같은 사람으로 묶음 → 한 건만 표시
   const par = new Map(), find = x => { while (par.get(x) !== x) x = par.get(x); return x; }, idx = {};
   const link = (k, a) => { if (!k) return; if (!idx[k]) { idx[k] = a; return; } const r1 = find(idx[k]), r2 = find(a); if (r1 !== r2) par.set(r2, r1); };
   list.forEach(a => {
-    par.set(a, a); a.dups = null; a.dupOf = null;
+    par.set(a, a); a.dupGroup = null;
     const ph = String(a.phone || '').replace(/\D/g, '').replace(/^82(?=1)/, '0');
     const em = norm(a.email).toLowerCase(), nm = compact(a.name).replace(/[a-z]/g, '');
     link(ph.length >= 9 ? 'p:' + ph : '', a); link(/@/.test(em) ? 'e:' + em : '', a); link(nm && norm(a.birth) ? 'n:' + nm + '|' + norm(a.birth) : '', a);
   });
   const dg = new Map(); list.forEach(a => { const r = find(a); if (!dg.has(r)) dg.set(r, []); dg.get(r).push(a); });
-  dg.forEach(g => { if (g.length < 2) return;
-    g.sort((x, y) => (y.appNo != null) - (x.appNo != null) || (y.ts || 0) - (x.ts || 0) || y.row - x.row);   // 스태프 번호가 있는 쪽 우선, 그다음 최근 접수
-    g[0].dups = g.slice(1); g.slice(1).forEach(a => { a.dupOf = g[0]; });
-  });
+  dg.forEach(g => { if (g.length > 1) g.forEach(a => { a.dupGroup = g; }); });   // 어느 것을 보여줄지는 dupKeep()이 그때그때 정함
   list.forEach(a => {
     a.hideReasons = []; a.warnReasons = [];
-    if (a.dupOf) a.hideReasons.push(`중복 지원 — 시트 ${a.dupOf.row}행 접수만 표시`);
-    if (a.dups) a.warnReasons.push(`중복 지원 ${a.dups.length + 1}회 — 다른 접수(시트 ${a.dups.map(x => x.row).join(', ')}행)는 숨김`);
     // 자동 숨김: 외국 국적은 국내 학교 재학 + 대상 연령일 때만 표시
     const nat = natInfo(a.nationality);
     if (nat.foreign) {
@@ -1208,6 +1203,13 @@ function classify(list, headers, map) {
     if (a.skippedNo) a.warnReasons.push('스태프가 번호를 비워 둔 행 (중복·제외 추정)');
   });
 }
+// 중복 묶음에서 보여줄 한 건: 직접 '다시 표시'한 것 → 직접 숨기지 않은 것 → 스태프 번호 있는 것 → 최근 접수
+function dupKeep(g) {
+  const sc = a => (overrides[a.key] === 'show' ? 8 : 0) + (overrides[a.key] === 'hide' ? 0 : 4) + (a.appNo != null ? 2 : 0);
+  return [...g].sort((x, y) => sc(y) - sc(x) || (y.ts || 0) - (x.ts || 0) || y.row - x.row)[0];
+}
+const dupHidden = a => !!a.dupGroup && dupKeep(a.dupGroup) !== a;
+const hideReasonsOf = a => [...(dupHidden(a) ? [`중복 지원 — 시트 ${dupKeep(a.dupGroup).row}행 접수만 표시`] : []), ...a.hideReasons];
 function needsReview(a) { return !isHidden(a) && a.warnReasons.length > 0 && reviews[a.key] !== 'ok'; }
 function photoOf(a) {
   const ids = a.files.filter(f => f.kind === 'photo').map(f => f.id);
@@ -1240,7 +1242,7 @@ function isHidden(a) {
   const o = overrides[a.key];
   if (o === 'hide') return true;
   if (o === 'show') return false;
-  return a.hideReasons.length > 0;
+  return a.hideReasons.length > 0 || dupHidden(a);
 }
 
 // ===================== 상태 & 렌더 =====================
@@ -1337,7 +1339,7 @@ function sideSchool(a) {
 function stageBadge(a) {
   const s = signs[a.key] || {}; const last = [...STAGES].reverse().find(t => s[t]);
   const c = contacts[a.key];
-  return (last ? `<span class="badge ok">${last} ✓</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? '✓ ' : c === '부재' ? '! ' : c === '고사' ? '× ' : ''}${c}</span>` : '') + (a.dups ? `<span class="badge dup" title="같은 사람이 ${a.dups.length + 1}번 지원 (최근 것만 표시)">중복 ${a.dups.length + 1}</span>` : '');
+  return (last ? `<span class="badge ok">${last} ✓</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? '✓ ' : c === '부재' ? '! ' : c === '고사' ? '× ' : ''}${c}</span>` : '') + (a.dupGroup && !isHidden(a) ? `<span class="badge dup" title="같은 사람이 ${a.dupGroup.length}번 지원 (시트 ${a.dupGroup.map(x => x.row).sort((x, y) => x - y).join(', ')}행) — 한 건만 표시">중복 ${a.dupGroup.length}</span>` : '');
 }
 // 사이드바 ⋯ 메뉴 항목
 function menuItems(a) {
@@ -1420,7 +1422,7 @@ function sheetHtml(a) {
   const etc = others.filter(f => !sing.includes(f) && !dance.includes(f));
   const snsVal = [a.snsType, a.sns].filter(Boolean).join(' · ');
   const reasons = hidden
-    ? `<div class="flags hide"><b>숨김 사유:</b> ${esc(a.hideReasons.join(', ') || '수동 숨김')}${a.warnReasons.length ? `<br><b>검토:</b> ${esc(a.warnReasons.join(', '))}` : ''}</div>`
+    ? `<div class="flags hide"><b>숨김 사유:</b> ${esc(hideReasonsOf(a).join(', ') || '수동 숨김')}${a.warnReasons.length ? `<br><b>검토:</b> ${esc(a.warnReasons.join(', '))}` : ''}</div>`
     : needsReview(a) ? `<div class="flags"><b>검토 필요:</b> ${esc(a.warnReasons.join(', '))}
         <div class="review-btns no-print"><button class="btn ok" data-act="approve">승인</button><button class="btn" data-act="hide">숨김</button></div></div>`
     : a.warnReasons.length ? `<div class="flags done"><b>검토 완료 (승인):</b> ${esc(a.warnReasons.join(', '))} <button class="btn no-print" data-act="unapprove">되돌리기</button></div>` : '';
@@ -2225,7 +2227,7 @@ function applyAct(key, act) {
     else if (act === 'toggle') overrides[a.key] = isHidden(a) ? 'show' : 'hide';
     else delete overrides[a.key];
     // 자동 판정과 같아지면 오버라이드 제거
-    if (overrides[a.key] && (overrides[a.key] === 'hide') === (a.hideReasons.length > 0)) delete overrides[a.key];
+    if (overrides[a.key] && !a.dupGroup && (overrides[a.key] === 'hide') === (a.hideReasons.length > 0)) delete overrides[a.key];   // 중복 묶음은 직접 고른 것을 그대로 둠
     saveField(a.key, 'override', overrides[a.key] || '');
   }
   rerender();
