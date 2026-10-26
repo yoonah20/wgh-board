@@ -1355,7 +1355,7 @@ function renderSide(gs) {
       <div class="item ${a.key === selected ? 'sel' : ''} ${isHidden(a) ? 'hidden-row' : ''}" data-key="${esc(a.key)}">
         <button class="more" data-more title="숨김·승인 등" aria-label="더 보기">⋯</button>
         <div class="thumb-col"><div class="thumb">${repImg(a)}</div>
-          <button class="heart ${myLike(a) ? 'on' : ''}" data-heart title="내 하트 (나만 보임)" aria-label="내 하트">${myLike(a) ? '♥' : '♡'}</button></div>
+          <button class="heart ${myLike(a) ? 'on' : ''}" data-heart ${heartTitle(a)}>${myLike(a) ? '♥' : '♡'}${isAdmin() && heartN(a) ? ` ${heartN(a)}` : ''}</button></div>
         <div style="min-width:0">
           <div class="nm">${esc(a.name) || '(이름 없음)'}${isHidden(a) ? '<span class="badge hide">숨김</span>' : needsReview(a) ? '<span class="badge warn">검토</span>' : ''}${stageBadge(a)}</div>
           <div class="sub">${[a.appNo != null ? '#' + a.appNo : '번호 없음', esc(sideSchool(a))].filter(Boolean).join(' · ')}</div>
@@ -1375,11 +1375,12 @@ function sideSchool(a) {
 const contactRow = a => `<div class="contact no-print">${['', ...CONTACTS].map(v => `<button class="cbtn ${(contacts[a.key] || '') === v ? 'on' : ''}" data-contact="${v}">${v || '연락 전'}</button>`).join('')}</div>`;
 // 관리자만: 전체 하트 수 (누가 눌렀는지는 마우스를 올리면)
 const heartN = a => Object.keys(likes[a.key] || {}).length;
-const heartBadge = a => { if (!isAdmin()) return ''; const who = Object.keys(likes[a.key] || {}); return who.length ? `<span class="badge hc" title="하트: ${esc(who.map(e => e.split('@')[0]).join(', '))}">♥ ${who.length}</span>` : ''; };
+// 하트 버튼: 다른 사람은 내 하트만, 관리자는 버튼 안에 전체 하트 수 (누가 눌렀는지는 마우스를 올리면)
+const heartTitle = a => { const who = Object.keys(likes[a.key] || {}); return isAdmin() && who.length ? `title="하트: ${esc(who.map(e => e.split('@')[0]).join(', '))}" aria-label="하트 ${who.length}개"` : 'title="내 하트 (나만 보임)" aria-label="내 하트"'; };
 function stageBadge(a) {
   const s = signs[a.key] || {}; const last = [...STAGES].reverse().find(t => s[t]);
   const c = contacts[a.key];
-  return heartBadge(a) + (last ? `<span class="badge ok">${last} ✓</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? '✓ ' : c === '부재' ? '! ' : c === '고사' ? '× ' : ''}${c}</span>` : '') + (a.dupGroup && !isHidden(a) ? `<span class="badge dup" title="같은 사람이 ${a.dupGroup.length}번 지원 (시트 ${a.dupGroup.map(x => x.row).sort((x, y) => x - y).join(', ')}행) — 한 건만 표시">중복 ${a.dupGroup.length}</span>` : '');
+  return (last ? `<span class="badge ok">${last} ✓</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? '✓ ' : c === '부재' ? '! ' : c === '고사' ? '× ' : ''}${c}</span>` : '') + (a.dupGroup && !isHidden(a) ? `<span class="badge dup" title="같은 사람이 ${a.dupGroup.length}번 지원 (시트 ${a.dupGroup.map(x => x.row).sort((x, y) => x - y).join(', ')}행) — 한 건만 표시">중복 ${a.dupGroup.length}</span>` : '');
 }
 // 사이드바 ⋯ 메뉴 항목
 function menuItems(a) {
