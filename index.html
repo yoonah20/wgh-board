@@ -548,6 +548,7 @@ body::before { background: #141416 !important; }
 .badge.ct2 { background: #e7f6ec; color: #15803d; }
 .badge.ct3 { background: #eeeceb; color: #57534e; }
 .badge.dup { background: #f3e8ff; color: #7e22ce; }
+.badge.hc { background: #ffe4ea; color: #be123c; }
 .vidbox { width: min(980px, 96vw); }
 .vframe { width: 100%; aspect-ratio: 16 / 9; max-height: 72vh; background: #000; border-radius: 8px; overflow: hidden; }
 .vframe iframe { width: 100%; height: 100%; border: 0; display: block; }
@@ -625,11 +626,13 @@ body.ph-open { overflow: hidden; }
 /* 통계 배치: 왼쪽 학교 비중·입학 예정 | 학교별 목록 | 학년·출생연도 | 거주 지역, 맨 아래 일별 접수 */
 .stats .slay { display: grid; gap: 14px; padding-top: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start;
   grid-template-areas: "donut list age region" "next list stage region" "daily daily daily daily"; }
+.stats .slay.adm { grid-template-areas: "donut list age region" "next list stage region" "heart daily daily daily"; }
 .stats .slay > .card { align-self: stretch; }
 .a-donut { grid-area: donut; } .a-list { grid-area: list; } .a-next { grid-area: next; } .a-age { grid-area: age; }
-.a-stage { grid-area: stage; } .a-region { grid-area: region; } .a-daily { grid-area: daily; }
+.a-heart { grid-area: heart; } .a-stage { grid-area: stage; } .a-region { grid-area: region; } .a-daily { grid-area: daily; }
 @media screen and (max-width: 1200px) { .stats .slay { grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-areas: "donut list" "next list" "age stage" "region region" "daily daily"; } }
+  grid-template-areas: "donut list" "next list" "age stage" "region region" "daily daily"; }
+  .stats .slay.adm { grid-template-areas: "donut list" "next list" "age stage" "region heart" "daily daily"; } }
 /* 일별 접수: 세로 막대 */
 .cols { display: flex; align-items: flex-end; gap: 2px; height: 150px; border-bottom: 1px solid #d6d3ce; padding-top: 18px; }
 .cols .c { flex: 1; min-width: 3px; position: relative; height: 100%; display: flex; align-items: flex-end; }
@@ -648,6 +651,7 @@ body.stats-open { overflow: hidden; }
   .brow, .blist.long .brow { grid-template-columns: minmax(0, 46%) minmax(40px, 1fr) 4.4em; font-size: 14px; }
   .stats .card.tall { grid-row: auto; }
   .stats .slay { grid-template-columns: minmax(0, 1fr); grid-template-areas: "donut" "list" "next" "age" "stage" "region" "daily"; gap: 10px; padding-top: 10px; }
+  .stats .slay.adm { grid-template-areas: "donut" "list" "next" "age" "stage" "region" "heart" "daily"; gap: 10px; padding-top: 10px; }
 }
 @media print { .stats { display: none !important; } }
 </style>
@@ -664,6 +668,7 @@ body.stats-open { overflow: hidden; }
     <option value="school">학교별</option>
     <option value="grade">학년별</option>
     <option value="heart">내 하트</option>
+    <option value="heartAll" hidden>하트 집계 (관리자)</option>
   </select>
   <button class="btn" id="statsBtn" title="지원자 통계 (숨김 제외)">통계</button>
   </div>
@@ -1304,7 +1309,12 @@ const myLike = a => !!(likes[a.key] || {})[myId()];
 const myId = () => VIEWER || 'me';
 function groups(list) {
   const g = new Map();
-  if (groupBy === 'heart') {   // 내가 하트한 지원자 먼저 (그 안에선 최신 접수 먼저)
+  if (groupBy === 'heartAll' && isAdmin()) {   // 관리자: 전체 하트 수 많은 순
+    const by = (x, y) => heartN(y) - heartN(x) || (y.ts || 0) - (x.ts || 0);
+    const m = new Map(); [...list].sort(by).forEach(a => { const n = heartN(a), k = n ? `♥ ${n}개` : '하트 없음'; if (!m.has(k)) m.set(k, { label: k, items: [] }); m.get(k).items.push(a); });
+    return [...m.values()];
+  }
+  if (groupBy === 'heart' || groupBy === 'heartAll') {   // 내가 하트한 지원자 먼저 (그 안에선 최신 접수 먼저)
     const by = (x, y) => (y.ts || 0) - (x.ts || 0);
     const mine = list.filter(myLike).sort(by), rest = list.filter(a => !myLike(a)).sort(by);
     return [...(mine.length ? [{ label: `내 하트 ♥`, items: mine }] : []), ...(rest.length ? [{ label: '나머지', items: rest }] : [])];
@@ -1363,10 +1373,13 @@ function sideSchool(a) {
 }
 // 연락 상태 버튼 (지원서 1쪽 맨 아래, 인쇄 안 됨)
 const contactRow = a => `<div class="contact no-print">${['', ...CONTACTS].map(v => `<button class="cbtn ${(contacts[a.key] || '') === v ? 'on' : ''}" data-contact="${v}">${v || '연락 전'}</button>`).join('')}</div>`;
+// 관리자만: 전체 하트 수 (누가 눌렀는지는 마우스를 올리면)
+const heartN = a => Object.keys(likes[a.key] || {}).length;
+const heartBadge = a => { if (!isAdmin()) return ''; const who = Object.keys(likes[a.key] || {}); return who.length ? `<span class="badge hc" title="하트: ${esc(who.map(e => e.split('@')[0]).join(', '))}">♥ ${who.length}</span>` : ''; };
 function stageBadge(a) {
   const s = signs[a.key] || {}; const last = [...STAGES].reverse().find(t => s[t]);
   const c = contacts[a.key];
-  return (last ? `<span class="badge ok">${last} ✓</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? '✓ ' : c === '부재' ? '! ' : c === '고사' ? '× ' : ''}${c}</span>` : '') + (a.dupGroup && !isHidden(a) ? `<span class="badge dup" title="같은 사람이 ${a.dupGroup.length}번 지원 (시트 ${a.dupGroup.map(x => x.row).sort((x, y) => x - y).join(', ')}행) — 한 건만 표시">중복 ${a.dupGroup.length}</span>` : '');
+  return heartBadge(a) + (last ? `<span class="badge ok">${last} ✓</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? '✓ ' : c === '부재' ? '! ' : c === '고사' ? '× ' : ''}${c}</span>` : '') + (a.dupGroup && !isHidden(a) ? `<span class="badge dup" title="같은 사람이 ${a.dupGroup.length}번 지원 (시트 ${a.dupGroup.map(x => x.row).sort((x, y) => x - y).join(', ')}행) — 한 건만 표시">중복 ${a.dupGroup.length}</span>` : '');
 }
 // 사이드바 ⋯ 메뉴 항목
 function menuItems(a) {
@@ -2246,7 +2259,7 @@ function renderStats() {
       <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">국내 지원자 기준</div></div>
       <div class="tile"><div class="k">지원 학교</div><div class="v">${schools.filter(r => !/미기재/.test(r[0])).length}<small>곳</small></div><div class="d">국내 재학생의 재학 학교</div></div>
     </div>
-    <div class="slay">
+    <div class="slay ${isAdmin() ? 'adm' : ''}">
       <div class="card a-donut"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 6곳</div>${donut(schools, enrolled.length)}</div>
       <div class="card a-list"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
       <div class="card a-next"><h3>입학 예정자(중3)의 진학 예정 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
@@ -2255,6 +2268,7 @@ function renderStats() {
       <div class="card a-stage"><h3>심사 진행</h3><div class="cap">전체 ${N}명 · 누르면 그 사람들만 목록에서 보기</div>${barList(stageRows, N, { click: fq('stage', stageV) })}
         <h3 style="margin-top:22px">연락 상태</h3><div class="cap">전체 ${N}명</div>${barList(contactRows, N, { click: fq('contact', contactV) })}</div>
       <div class="card a-region"><h3>거주 지역</h3><div class="cap">국내 ${dom.length}명 · 주소 기준</div>${barList(regions, dom.length)}</div>
+      ${isAdmin() ? `<div class="card a-heart"><h3>하트 많은 지원자 <span class="note">· 관리자만</span></h3><div class="cap">스태프 하트 합계 · %는 하트를 누른 스태프 ${new Set(Object.values(likes).flatMap(o => Object.keys(o))).size}명 중 · 누르면 목록에서 보기</div>${barList(valid.filter(a => heartN(a)).sort((x, y) => heartN(y) - heartN(x)).slice(0, 12).map(a => [a.name, heartN(a)]), Math.max(1, new Set(Object.values(likes).flatMap(o => Object.keys(o))).size), { long: true, click: k => k })}</div>` : ''}
       <div class="card a-daily"><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div>${dailyCols(valid)}</div>
     </div>`;
   ov.querySelector('.sbar .note').textContent = `숨김 제외 ${N}명 · 수집 ${COLLECTED || hhmm()}`;
@@ -2343,6 +2357,8 @@ function webLoad(first) {
   return call('getInitial').then(d => {
     VIEWER = d.viewer; document.body.classList.remove('login-mode');
     $('#adminBtn').hidden = !isAdmin();
+    $('#groupSel option[value="heartAll"]').hidden = !isAdmin();
+    if (groupBy === 'heartAll' && !isAdmin()) groupBy = 'date';
     SUMMARY = d.summary || {};
     if (first) { WM_TEXT = `${d.viewer} · ${d.now} · 대외비`; addIpToWatermark(d.viewer, d.now); }
     updateWatermark();
