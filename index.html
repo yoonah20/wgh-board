@@ -1663,7 +1663,6 @@ function openViewer(key, silent, startSheet) {   // startSheet: 누른 쪽부터
   const pair = document.getElementById('s-' + key); if (!pair) return;
   closeViewer(); viewerKey = key;
   const a = DATA.list.find(x => x.key === key);
-  if (!silent && a) logEv('지원서 열람', a.name);
   const sheets = [...pair.querySelectorAll('.sheet')];
   const ov = document.createElement('div'); ov.className = 'viewer'; ov.id = 'viewer';
   ov.innerHTML = `<div class="vbar"><b>${esc(a ? a.no + ' · ' + a.name : '')}</b><span>${sheets.length}쪽</span><span class="spacer"></span>
@@ -1854,14 +1853,6 @@ function updateWatermark() {
   const b = document.getElementById('wmBtn'); if (!b) return;   // 워터마크 버튼은 지금 화면에서 뺌
   b.hidden = !(WEB && VIEWER && VIEWER.toLowerCase() === ADMIN);
   b.textContent = wmOn() ? '워터마크 켜짐' : '워터마크 꺼짐'; b.classList.toggle('on', wmOn());
-}
-// 접속 IP를 활동 기록에만 남김 (공인 IP 조회: api.ipify.org, 3초 안에 안 오면 생략)
-function addIpToWatermark(viewer, now) {
-  const ctl = new AbortController(); setTimeout(() => ctl.abort(), 3000);
-  fetch('https://api.ipify.org?format=json', { credentials: 'omit', signal: ctl.signal }).then(r => r.json()).then(j => {
-    const ip = String(j && j.ip || '').replace(/[^0-9a-fA-F.:]/g, '').slice(0, 45); if (!ip) return;
-    logEv('접속', '', 'IP ' + ip);   // IP는 워터마크에 넣지 않고 활동 기록에만
-  }).catch(() => {});
 }
 // A4 한 장 크기(794×1123) 그림 하나에 문구를 비스듬히 촘촘하게 직접 배치 (반복·회전 없이 → 화면과 인쇄가 똑같음)
 function setWatermark(text) {
@@ -2097,7 +2088,6 @@ function openMobile(key, replace) {
   document.body.classList.add('m-detail');
   markMobileCur();
   window.scrollTo(0, 0);
-  logEv('지원서 열람', a.name);
 }
 function markMobileCur() {
   if (!document.body.classList.contains('m-detail')) return;
@@ -2144,7 +2134,6 @@ function openPhoto(key, id) {
   phState = { key, ids, i: Math.max(0, ids.indexOf(id)) };
   $('#phModal').hidden = false; document.body.classList.add('ph-open');
   showPhoto();
-  logEv('사진 크게 보기', a.name);
 }
 function showPhoto() {
   const { key, ids, i } = phState, id = ids[i], a = DATA.list.find(x => x.key === key);
@@ -2176,7 +2165,6 @@ function openVideo(id, cap, key) {
   $('#vOpen').href = viewUrl(id);
   $('#vFrame').src = `https://drive.google.com/file/d/${encodeURIComponent(id)}/preview`;
   $('#vidModal').hidden = false;
-  logEv('영상 재생', a ? a.name : '', cap || '');
 }
 function closeVideo() { $('#vidModal').hidden = true; $('#vFrame').src = 'about:blank'; }
 $('#vClose').onclick = closeVideo;
@@ -2295,7 +2283,6 @@ function openStats() {
         render(); window.scrollTo(0, 0);
       }
     });
-    logEv('통계 열람');
   }
   document.body.classList.add('stats-open'); $('#statsBtn').classList.add('on');
   renderStats();
@@ -2365,7 +2352,7 @@ function webLoad(first) {
     $('#groupSel option[value="heartAll"]').hidden = !isAdmin();
     if (groupBy === 'heartAll' && !isAdmin()) groupBy = 'date';
     SUMMARY = d.summary || {};
-    if (first) { WM_TEXT = `${d.viewer} · ${d.now} · 대외비`; addIpToWatermark(d.viewer, d.now); }
+    if (first) { WM_TEXT = `${d.viewer} · ${d.now} · 대외비`; }
     updateWatermark();
     syncSnapshot = '';
     load(d.csv, false, d.asOf);
