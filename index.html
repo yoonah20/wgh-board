@@ -1362,7 +1362,7 @@ function renderSide(gs) {
         <div style="min-width:0">
           <div class="nm">${esc(a.name) || '(이름 없음)'}${isHidden(a) ? '<span class="badge hide">숨김</span>' : needsReview(a) ? '<span class="badge warn">검토</span>' : ''}${stageBadge(a)}</div>
           <div class="sub">${[a.appNo != null ? '#' + a.appNo : '번호 없음', esc(sideSchool(a))].filter(Boolean).join(' · ')}</div>
-          <div class="sub">${[a.b ? String(a.b.y).slice(2) + '년생' : '', esc(a.field || a.dept) || '전공 미기재'].filter(Boolean).join(' · ')}</div>
+          <div class="sub">${[a.b ? String(a.b.y).slice(2) + '년생' : '', esc(a.dept) || '학과 미기재'].filter(Boolean).join(' · ')}</div>
           ${SUMMARY[a.row] ? `<div class="sum">${esc(SUMMARY[a.row])}</div>` : ''}
         </div>
       </div>`).join('')}
