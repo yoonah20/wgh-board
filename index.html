@@ -2013,7 +2013,7 @@ document.addEventListener('click', e => {
   closeMenu(); printPeople(pb.dataset.print === 'one' ? pb.dataset.key : null);
 });
 // 드라이브 썸네일을 못 불러오면 이미지를 지우고 아래 안내 글자를 보여줌
-document.addEventListener('error', e => { if (e.target.tagName === 'IMG' && !e.target.dataset.thumb) e.target.remove(); }, true);
+document.addEventListener('error', e => { if (e.target.tagName === 'IMG' && !e.target.dataset.thumb && e.target.id !== 'phImg') e.target.remove(); }, true);   // 크게 보기 창의 사진은 지우지 않음
 $('#q').oninput = render;
 // 필터 팝오버: 바깥을 누르면 닫힘
 document.addEventListener('click', e => { const f = document.getElementById('filters'); if (f && f.open && !e.target.closest('#filters')) f.open = false; });
@@ -2158,7 +2158,7 @@ function showPhoto() {
   if (ids[i + 1] && !BIG[ids[i + 1]]) call('getThumb', ids[i + 1], 1600).then(d => { if (d && d.content) BIG[ids[i + 1]] = `data:${d.mimeType};base64,${d.content}`; }).catch(() => {});
 }
 const stepPhoto = d => { if (!phState) return; const n = phState.i + d; if (n < 0 || n >= phState.ids.length) return; phState.i = n; showPhoto(); };
-function closePhoto() { $('#phModal').hidden = true; $('#phImg').src = ''; phState = null; document.body.classList.remove('ph-open'); }
+function closePhoto() { $('#phModal').hidden = true; $('#phImg').removeAttribute('src'); phState = null; document.body.classList.remove('ph-open'); }
 $('#phClose').onclick = closePhoto;
 $('#phPrev').onclick = () => stepPhoto(-1); $('#phNext').onclick = () => stepPhoto(1);
 $('#phModal').onclick = e => { if (e.target.id === 'phModal' || e.target.classList.contains('phstage')) closePhoto(); };
