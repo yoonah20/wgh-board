@@ -1659,7 +1659,7 @@ function rerender() {
 // ===================== 지원서 크게 보기 (PDF 뷰어처럼 화면 폭에 맞춰 세로로) =====================
 // 같은 종이를 옮겨 와서 보여 주므로 메모·체크·승인 등은 그대로 동작. 닫으면 제자리로 돌려놓음
 let viewerKey = null, viewerScroll = {};
-function openViewer(key, silent) {
+function openViewer(key, silent, startSheet) {   // startSheet: 누른 쪽부터 보여줌
   const pair = document.getElementById('s-' + key); if (!pair) return;
   closeViewer(); viewerKey = key;
   const a = DATA.list.find(x => x.key === key);
@@ -1677,7 +1677,8 @@ function openViewer(key, silent) {
   sheets.forEach(sh => { const w = document.createElement('div'); w.className = 'vpage'; w.appendChild(sh); vp.appendChild(w); });
   $('#vzSel').value = String(viewerZoom); $('#vzSel').onchange = e => setViewerZoom(e.target.value === 'fit' ? 'fit' : +e.target.value);
   layoutViewer();
-  ov.scrollTop = viewerScroll[key] || 0;
+  const vb = ov.querySelector('.vbar'), sp = startSheet && startSheet.closest('.vpage');
+  ov.scrollTop = sp ? Math.max(0, sp.offsetTop - (vb ? vb.offsetHeight : 0) - 12) : (viewerScroll[key] || 0);
   ov.addEventListener('scroll', () => { viewerScroll[key] = ov.scrollTop; });
 }
 // 크기: '폭 맞춤' 또는 배율(1 = 실제 A4 크기). 고른 값은 기억
@@ -2059,7 +2060,7 @@ $('#main').addEventListener('click', e => {
   if (e.target.closest('[data-vclose]') || e.target.id === 'viewer' || e.target.classList.contains('vpages')) { closeViewer(); return; }
   const sh = e.target.closest('.pair .sheet');
   if (sh && !viewerKey && !isMobile() && !e.target.closest('a, button, input, textarea, label, select, [data-act], [data-rep], [data-crop], [data-sign], [data-deck]')) {
-    openViewer(sh.closest('.pair').dataset.key); return;
+    openViewer(sh.closest('.pair').dataset.key, false, sh); return;
   }
   const db = e.target.closest('[data-deck]');
   if (db) { moveDeck(db.closest('.pair'), +db.dataset.deck); return; }
