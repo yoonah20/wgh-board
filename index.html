@@ -602,6 +602,13 @@ mark.hl.hc0 { --hl: #ffe94d; } mark.hl.hc1 { --hl: #8ef0a8; } mark.hl.hc2 { --hl
 .files.photos .fimg { background: #f1f1f1 !important; }
 .files.photos .fimg img { object-fit: contain !important; }
 .files.photos .fimg span { color: #aaa; }
+/* 사이드바 카드: 마우스를 올리면 살짝 분홍빛으로 (마우스 있는 기기에서만) */
+@media (hover: hover) {
+  .item { transition: background-color .12s, box-shadow .12s; }
+  .item:hover { background: #fff1f4 !important; box-shadow: 0 0 0 1px #fecdd6, 0 4px 14px rgba(0,0,0,.08) !important; }
+  .item:hover .sum { background: #fbe9ed; }
+  .item.sel:hover { box-shadow: 0 0 0 2px #e11d48, 0 4px 14px rgba(0,0,0,.08) !important; }
+}
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
