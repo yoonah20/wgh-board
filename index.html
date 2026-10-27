@@ -1005,7 +1005,7 @@ function rotateTo(id, deg) {
     c.width = sw ? im.naturalHeight : im.naturalWidth; c.height = sw ? im.naturalWidth : im.naturalHeight;
     const x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(deg * Math.PI / 180); x.drawImage(im, -im.naturalWidth / 2, -im.naturalHeight / 2);
     ROT[ck] = c.toDataURL('image/jpeg', 0.9);
-    document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(e => { if (rotOf(id) === deg) e.src = ROT[ck]; });
+    document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(e => { if (rotOf(id) === deg) paintThumb(e, ROT[ck]); });
     if (!$('#cropModal').hidden && $('#cImg').dataset.wait === ck) $('#cImg').src = ROT[ck];
   };
   im.src = IMG[id];
@@ -1033,9 +1033,54 @@ const idb = (() => {
     clear: () => { try { if (dbRef) dbRef.close(); } catch {} dbRef = null; p = null; try { indexedDB.deleteDatabase(THUMB_DB); } catch {} },
   };
 })();
+// 사진 자체에 들어 있는 검은 띠 여백(화면 캡처 등)을 잘라냄 — 지원서 사진 칸·크게 보기에만 (대표 사진 자르기 좌표는 원본 기준이라 건드리지 않음)
+const TRIM = new Map();
+function trimBars(uri) {
+  if (!uri || !uri.startsWith('data:')) return Promise.resolve(uri);
+  if (TRIM.has(uri)) return TRIM.get(uri);
+  const p = new Promise(res => {
+    const im = new Image();
+    im.onload = () => {
+      const W = im.naturalWidth, H = im.naturalHeight; if (!W || !H) return res(uri);
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0);
+      const d = x.getImageData(0, 0, W, H).data, px = (i, j) => { const k = (j * W + i) * 4; return [d[k], d[k + 1], d[k + 2]]; };
+      // 띠 = 거의 완전한 검정(평균 20 미만)이고 한 줄 94% 이상이 같은 색. 밤하늘·어두운 무대처럼 노이즈 있는 곳은 띠가 아님
+      const flatRow = (n, get) => { const ref = get(0); if ((ref[0] + ref[1] + ref[2]) / 3 >= 20) return false;
+        let bad = 0, cnt = 0, step = Math.max(1, Math.floor(n / 160));
+        for (let t = 0; t < n; t += step, cnt++) { const v = get(t); if (Math.abs(v[0] - ref[0]) + Math.abs(v[1] - ref[1]) + Math.abs(v[2] - ref[2]) > 15) bad++; }
+        return bad <= cnt * 0.06; };   // 작은 아이콘·글자는 줄의 6%까지 허용
+      // 가장자리부터 안쪽으로: 띠가 아닌 줄이 잠깐(아이콘·글자) 끼어도 넘어가고, 길게 이어지면 거기서 멈춤
+      const edge = (len, lim, isFlat) => { let best = 0, flat = 0, miss = 0, maxMiss = Math.max(6, Math.round(len * 0.05));
+        for (let k = 0; k < lim; k++) {
+          if (isFlat(k)) { flat++; miss = 0; if (flat >= (k + 1) * 0.8) best = k + 1; }
+          else if (++miss > maxMiss) break;   // 띠가 아닌 줄이 길게 이어지면 사진 시작
+        }
+        return best; };
+      const tT = edge(H, Math.floor(H * 0.45), k => flatRow(W, i => px(i, k)));
+      const tB = edge(H, Math.floor(H * 0.45), k => flatRow(W, i => px(i, H - 1 - k)));
+      const y0 = tT, y1 = H - 1 - tB;
+      const tL = edge(W, Math.floor(W * 0.45), k => flatRow(y1 - y0 + 1, j => px(k, y0 + j)));
+      const tR = edge(W, Math.floor(W * 0.45), k => flatRow(y1 - y0 + 1, j => px(W - 1 - k, y0 + j)));
+      let top = tT, bot = H - 1 - tB, lef = tL, rig = W - 1 - tR;
+      const cut = v => v >= 0.03;   // 3% 이상일 때만 자름
+      if (!(cut(top / H) || cut((H - 1 - bot) / H) || cut(lef / W) || cut((W - 1 - rig) / W))) return res(uri);
+      const t = cut(top / H) ? top : 0, b = cut((H - 1 - bot) / H) ? bot : H - 1, l = cut(lef / W) ? lef : 0, r = cut((W - 1 - rig) / W) ? rig : W - 1;
+      const o = document.createElement('canvas'); o.width = r - l + 1; o.height = b - t + 1;
+      o.getContext('2d').drawImage(c, l, t, o.width, o.height, 0, 0, o.width, o.height);
+      res(o.toDataURL('image/jpeg', 0.92));
+    };
+    im.onerror = () => res(uri); im.src = uri;
+  });
+  TRIM.set(uri, p); return p;
+}
+function paintThumb(im, u) {
+  if (!im.dataset.trim) { im.src = u; return; }
+  im.src = u; trimBars(u).then(t => { if (im.dataset.thumb && imgSrc(im.dataset.thumb) === u) im.src = t; });
+}
 function showThumb(id, uri) {
   IMG[id] = uri; const u = imgSrc(id);
-  document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(im => { im.src = u; });
+  document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(im => paintThumb(im, u));
 }
 function loadThumb(id) {
   if (IMG[id]) return Promise.resolve(IMG[id]);
@@ -1465,7 +1510,7 @@ const shortLabel = h => (SHORT_LABELS.find(([re]) => re.test(h)) || [0, norm(h).
 
 function photoCard(f, cap, isRep) {
   return `<div class="file photo${isRep ? ' rep' : ''}">
-    <a class="fimg" href="${viewUrl(f.id)}" target="_blank" rel="noopener" title="원본 열기"><span>사진</span><img src="${imgSrc(f.id)}" data-thumb="${esc(f.id)}" alt="" loading="lazy"></a>
+    <a class="fimg" href="${viewUrl(f.id)}" target="_blank" rel="noopener" title="원본 열기"><span>사진</span><img src="${imgSrc(f.id)}" data-thumb="${esc(f.id)}" data-trim="1" alt="" loading="lazy"></a>
     <div class="fcap"><span>${esc(cap)}</span>${isRep ? `<span class="no-print"><b class="rep-on">★ 대표</b>${isAdmin() ? ' <button class="rep-btn" data-crop>자르기</button>' : ''}</span>` : isAdmin() ? `<button class="rep-btn no-print" data-rep="${esc(f.id)}">대표로</button>` : ''}</div></div>`;
 }
 function fileCard(f, cap) {
@@ -1676,6 +1721,7 @@ function renderMain(gs) {
   fitCrops(main);
   if (isMobile()) markMobileCur();
   applyHL(main);
+  main.querySelectorAll('img[data-trim]').forEach(im => { const id = im.dataset.thumb; if (IMG[id]) paintThumb(im, imgSrc(id)); });
 }
 
 // 스크롤 위치를 지키며 다시 그림 (넘겨 둔 쪽 위치는 deckPos에 남아 있음)
@@ -2251,7 +2297,8 @@ function showPhoto() {
   $('#phOpen').href = viewUrl(id);
   $('#phPrev').disabled = i === 0; $('#phNext').disabled = i === ids.length - 1;
   const im = $('#phImg'); im.dataset.id = id; im.src = imgSrc(id);
-  const put = uri => rotData(uri, rotOf(id)).then(u => { if (im.dataset.id === id) im.src = u; });
+  const put = uri => rotData(uri, rotOf(id)).then(trimBars).then(u => { if (im.dataset.id === id) im.src = u; });
+  trimBars(imgSrc(id)).then(u => { if (im.dataset.id === id && !BIG[id]) im.src = u; });
   if (BIG[id]) { put(BIG[id]); return; }
   if (!WEB) return;
   call('getThumb', id, 1600).then(d => { if (d && d.content) { BIG[id] = `data:${d.mimeType};base64,${d.content}`; put(BIG[id]); } }).catch(() => {});
