@@ -582,8 +582,12 @@ body.ph-open { overflow: hidden; }
   .phbar #phOpen { display: none; }
 }
 /* 형광펜 */
-mark.hl { color: inherit; border-radius: 2px; padding: 0 1px; cursor: pointer; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-.hc0 { background: #fff176; } .hc1 { background: #b9f6ca; } .hc2 { background: #ffc4d6; } .hc3 { background: #bfe3ff; }
+/* 손으로 그은 형광펜: 양 끝이 비스듬하고 모서리가 살짝 불규칙, 글자 위아래까지 넉넉히 덮음 */
+mark.hl { color: inherit; cursor: pointer; padding: .12em .3em; margin: 0 -.15em; border-radius: .3em .5em .4em .6em;
+  background: linear-gradient(104deg, transparent .3em, var(--hl) .42em, var(--hl) calc(100% - .42em), transparent calc(100% - .28em));
+  -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+mark.hl.hc0 { --hl: #ffe94d; } mark.hl.hc1 { --hl: #8ef0a8; } mark.hl.hc2 { --hl: #ffa3c0; } mark.hl.hc3 { --hl: #99d2ff; }
+.hltool .hc0 { background: #ffe94d; } .hltool .hc1 { background: #8ef0a8; } .hltool .hc2 { background: #ffa3c0; } .hltool .hc3 { background: #99d2ff; }
 .sheet td[data-hl] { cursor: text; }
 .hltool { position: fixed; z-index: 70; display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: #141416; border-radius: 99px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
 .hltool[hidden] { display: none; }
