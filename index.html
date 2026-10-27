@@ -598,6 +598,10 @@ mark.hl.hc0 { --hl: #ffe94d; } mark.hl.hc1 { --hl: #8ef0a8; } mark.hl.hc2 { --hl
   .hltool button[data-hlc] { width: 30px; height: 30px; }
   .hltool button[data-hlx] { font-size: 14px; padding: 6px 8px; }
 }
+/* 지원서 사진 칸: 잘라내지 않고 사진 전체가 보이게 (남는 곳은 검은 여백) */
+.files.photos .fimg { background: #111 !important; }
+.files.photos .fimg img { object-fit: contain !important; }
+.files.photos .fimg span { color: #777; }
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
