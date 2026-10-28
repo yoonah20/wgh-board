@@ -609,6 +609,9 @@ mark.hl.hc0 { --hl: #ffe94d; } mark.hl.hc1 { --hl: #8ef0a8; } mark.hl.hc2 { --hl
   .item:hover .sum { background: #fbe9ed; }
   .item.sel:hover { box-shadow: 0 0 0 2px #e11d48, 0 4px 14px rgba(0,0,0,.08) !important; }
 }
+#appTitle { cursor: pointer; border-radius: 6px; }
+#appTitle:hover { color: #fb7185 !important; }
+body.login-mode #appTitle { cursor: default; } body.login-mode #appTitle:hover { color: #fff !important; }
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
@@ -686,7 +689,7 @@ body.stats-open { overflow: hidden; }
 
 <div class="topbar">
   <div class="tb-left">
-  <h1 id="appTitle">WE GO HIGH 지원자 명단</h1>
+  <h1 id="appTitle" role="link" tabindex="0" title="처음 화면으로">WGH 지원자 명단</h1>
   <span class="stat" id="stat"></span>
   </div>
   <div class="tb-center">
@@ -2341,6 +2344,20 @@ function setContact(key, v) {
   saveField(key, 'contact', v);
   rerender();
 }
+// ===================== 처음 화면으로 (왼쪽 위 제목) =====================
+// 열려 있는 창을 모두 닫고, 검색·필터를 비우고, 맨 위로 (정렬 방식은 그대로)
+function goHome() {
+  if (!DATA) return;
+  closeViewer(); closeStats(); if (phState) closePhoto(); if (!$('#vidModal').hidden) closeVideo();
+  ['#logModal', '#cropModal'].forEach(id => { const m = $(id); if (m && !m.hidden) m.hidden = true; });
+  hideHLTool(); closeMenu(); const f = $('#filters'); if (f) f.open = false;
+  if (document.body.classList.contains('m-detail')) { document.body.classList.remove('m-detail'); if (history.state && history.state.m) history.replaceState(null, ''); }
+  $('#q').value = ''; $('#showHidden').checked = false; $('#onlyWarn').checked = false; $('#stageF').value = ''; $('#contactF').value = ''; syncFilterMark();
+  selected = null; Object.keys(deckPos).forEach(k => delete deckPos[k]);
+  render(); window.scrollTo(0, 0); $('#side').scrollTop = 0;
+}
+$('#appTitle').onclick = goHome;
+$('#appTitle').onkeydown = e => { if (e.key === 'Enter') goHome(); };
 // ===================== 통계 (숨김 제외) =====================
 const REGIONS = [['서울', /^서울/], ['경기', /^경기|^(수원|성남|고양|용인|부천|안산|안양|남양주|화성|평택|의정부|시흥|파주|김포|광명|광주시|군포|하남|오산|이천|양주|구리|안성|포천|의왕|여주|동두천|과천|가평|양평|연천)/], ['인천', /^인천/], ['부산', /^부산/],
   ['대구', /^대구/], ['광주', /^광주/], ['대전', /^대전/], ['울산', /^울산/], ['세종', /^세종/], ['강원', /^강원|^(춘천|원주|강릉|속초)/], ['충북', /^충(청)?북|^(청주|충주|제천)/],
@@ -2487,7 +2504,7 @@ $('#main').addEventListener('input', e => {
 });
 // 상단바 제목 + 마지막 수집 시각 (asOf: 'yyyy-MM-dd HH:mm' 또는 '2026-10-24 오후')
 function setAppTitle(asOf) {
-  $('#appTitle').textContent = 'WE GO HIGH 지원자 명단';
+  $('#appTitle').textContent = 'WGH 지원자 명단';
   const m = norm(asOf).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})(?:\D+(\d{1,2}):(\d{2}))?/);
   COLLECTED = m ? `${+m[2]}/${+m[3]}${m[4] ? ` ${m[4].padStart(2, '0')}:${m[5]}` : ''}` : '';
   if (COLLECTED) setSyncStat(collectedText());
@@ -2539,7 +2556,7 @@ function showLogin(msg) {
   const sync = document.getElementById('syncStat'); if (sync) sync.hidden = true;
   $('#main').innerHTML = `
     <div class="empty login">
-      <h2>WE GO HIGH 지원자 명단</h2>
+      <h2>WGH 지원자 명단</h2>
       <p class="note">프로젝트 Slack 채널 멤버만 볼 수 있습니다. 등록된 이메일로 인증코드를 보내 드립니다.</p>
       <form id="loginEmail"><label>이메일<input type="email" id="lgEmail" required autocomplete="email" placeholder="name@monsterahaus.com"></label>
         <button class="btn primary" id="lgSend">인증코드 받기</button></form>
