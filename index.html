@@ -1468,10 +1468,13 @@ function stageBadge(a) {
 }
 // 사이드바 ⋯ 메뉴 항목
 function menuItems(a) {
-  const items = [[isHidden(a) ? 'toggle' : 'toggle', isHidden(a) ? '다시 표시' : '숨김 처리']];
-  if (needsReview(a)) items.push(['approve', '승인 (검토 해제)']);
-  else if (reviews[a.key] === 'ok') items.push(['unapprove', '승인 취소 (다시 검토)']);
-  if (overrides[a.key]) items.push(['reset', '자동 판정으로 되돌리기']);
+  const items = [];
+  if (isAdmin()) {   // 숨김·승인은 관리자만
+    items.push(['toggle', isHidden(a) ? '다시 표시' : '숨김 처리']);
+    if (needsReview(a)) items.push(['approve', '승인 (검토 해제)']);
+    else if (reviews[a.key] === 'ok') items.push(['unapprove', '승인 취소 (다시 검토)']);
+    if (overrides[a.key]) items.push(['reset', '자동 판정으로 되돌리기']);
+  }
   items.push(['print', '이 지원서 인쇄']);
   return items;
 }
@@ -1549,8 +1552,8 @@ function sheetHtml(a) {
   const reasons = hidden
     ? `<div class="flags hide"><b>숨김 사유:</b> ${esc(hideReasonsOf(a).join(', ') || '수동 숨김')}${a.warnReasons.length ? `<br><b>검토:</b> ${esc(a.warnReasons.join(', '))}` : ''}</div>`
     : needsReview(a) ? `<div class="flags"><b>검토 필요:</b> ${esc(a.warnReasons.join(', '))}
-        <div class="review-btns no-print"><button class="btn ok" data-act="approve">승인</button><button class="btn" data-act="hide">숨김</button></div></div>`
-    : a.warnReasons.length ? `<div class="flags done"><b>검토 완료 (승인):</b> ${esc(a.warnReasons.join(', '))} <button class="btn no-print" data-act="unapprove">되돌리기</button></div>` : '';
+        ${isAdmin() ? '<div class="review-btns no-print"><button class="btn ok" data-act="approve">승인</button><button class="btn" data-act="hide">숨김</button></div>' : ''}</div>`
+    : a.warnReasons.length ? `<div class="flags done"><b>검토 완료 (승인):</b> ${esc(a.warnReasons.join(', '))} ${isAdmin() ? '<button class="btn no-print" data-act="unapprove">되돌리기</button>' : ''}</div>` : '';
   // 사진은 3장씩 한 줄 = 한 블록 (줄 단위로 다음 쪽에 넘어갈 수 있게)
   const photoRows = [];
   for (let i = 0; i < photos.length; i += 5)
@@ -2473,6 +2476,7 @@ $('#statsBtn').onclick = () => document.getElementById('stats') ? closeStats() :
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('stats')) closeStats(); });
 // 숨김·승인 동작 (지원서 안 버튼과 사이드바 ⋯ 메뉴가 같이 씀)
 function applyAct(key, act) {
+  if (!isAdmin() && act !== 'print') return;   // 숨김·승인은 관리자만
   const a = DATA.list.find(x => x.key === key); if (!a) return;
   if (act === 'approve' || act === 'unapprove') {
     if (act === 'approve') reviews[a.key] = 'ok'; else delete reviews[a.key];
