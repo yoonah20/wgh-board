@@ -127,7 +127,7 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px
 /* ---------- 레이아웃 ---------- */
 .layout { display: grid; grid-template-columns: 350px 1fr; min-height: calc(100% - 56px); }
 .side { border-right: 1px solid var(--line); background: var(--panel); overflow: auto; max-height: calc(100vh - var(--tbh, 56px)); position: sticky; top: var(--tbh, 56px); }
-.main { padding-block: 24px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); overflow: auto; min-width: 0; }
+.main { padding-block: 13px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); overflow: auto; min-width: 0; }
 
 .group-h {
   position: sticky; top: 0; z-index: 5; background: var(--side-head); border-bottom: 1px solid var(--line);   /* 사진 위로 */
@@ -234,7 +234,7 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
 .pair.deck.dragging * { user-select: none; }
 .deck-spacer { height: 1px; }
 .pair, .grp-title { scroll-margin-top: calc(var(--tbh, 56px) + 14px); }
-.ablock { scroll-margin-top: calc(var(--tbh, 56px) + 6px); }
+.ablock { scroll-margin-top: calc(var(--tbh, 56px) + 13px); }
 .pair.deck .sheet { box-shadow: 0 2px 10px rgba(0,0,0,.15); }
 .pair.deck .sheet { position: absolute; top: 0; left: 0; margin: 0; transform-origin: 0 0; }
 .pair.deck .sheet.back { box-shadow: 0 1px 6px rgba(0,0,0,.18); cursor: pointer; }
@@ -606,8 +606,8 @@ mark.hl.hc0 { --hl: #ffe94d; } mark.hl.hc1 { --hl: #8ef0a8; } mark.hl.hc2 { --hl
 /* 사이드바 카드: 마우스를 올리면 살짝 분홍빛으로 (마우스 있는 기기에서만) */
 @media (hover: hover) {
   .item { transition: background-color .12s, box-shadow .12s; }
-  .item:hover { background: #fff1f4 !important; box-shadow: 0 0 0 1px #fecdd6, 0 4px 14px rgba(0,0,0,.08) !important; }
-  .item:hover .sum { background: #fbe9ed; }
+  .item:hover { background: #fbf8f3 !important; box-shadow: 0 0 0 1px #ddd3c4, 0 4px 14px rgba(0,0,0,.08) !important; }
+  .item:hover .sum { background: #f3eee6; }
   .item.sel:hover { box-shadow: 0 0 0 2px #e11d48, 0 4px 14px rgba(0,0,0,.08) !important; }
 }
 #appTitle { cursor: pointer; border-radius: 6px; }
@@ -717,7 +717,7 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
 /* 지원서 쪽 날짜 묶음 제목은 PC에서 숨김 (각 지원서 위 헤더 바가 있음) */
 @media screen and (min-width: 761px) { .main .grp-title { display: none; } }
 /* 지원자 헤더 바 */
-.ablock { margin: 0 auto 32px; }
+.ablock { margin: 0 auto 26px; }
 .ablock .pair { margin-bottom: 0 !important; }
 .ahead { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.06); padding: 8px 14px; margin: 0 0 12px; }
 .ahph { width: 34px; height: 45px; border-radius: 6px; background: #d9d4cd; position: relative; overflow: hidden; flex: none; }
@@ -768,13 +768,13 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
   .stats .scols { columns: 1; } .dch { height: 160px; gap: 3px; } .dbar .dv { font-size: 10px; } .dx { font-size: 10px; }
 }
 
-/* ===== 밝은 상단바 (연분홍 기운) + 연분홍 번호표 ===== */
-html .topbar, html body::before, html .mbar { background: #fff3f5 !important; border-bottom: 1px solid #f5d5dd !important; color: #141416 !important; }
+/* ===== 상단바: 사이드바보다 조금 진한 베이지 · 번호표: 로고 빨강 ===== */
+html .topbar, html body::before, html .mbar { background: #e3dccf !important; border-bottom: 1px solid #d3c9b9 !important; color: #141416 !important; }
 html .topbar h1, html .mbar .mttl { color: #141416 !important; } html .mbar .mttl small { color: #6b645c; }
-html .topbar .stat, html .topbar .stat.sync { color: #6b645c !important; } html .topbar .stat b { color: #e11d48 !important; }
-html .topbar #q, html .topbar #groupSel, html .topbar .btn, html .filters > summary { background-color: #fffafb !important; color: #141416 !important; border-color: #f0d3db !important; }
-html .topbar #q::placeholder { color: #8a837b; } html .mbar button { color: #141416; }
-html .bibs:not(.none), html .sheet-top .meta .pbib { background: #ffe4ea !important; color: #be123c !important; }
+html .topbar .stat, html .topbar .stat.sync { color: #5f574f !important; } html .topbar .stat b { color: #e11d48 !important; }
+html .topbar #q, html .topbar #groupSel, html .topbar .btn, html .filters > summary { background-color: #f7f3ec !important; color: #141416 !important; border-color: #cfc5b5 !important; }
+html .topbar #q::placeholder { color: #857c71; } html .mbar button { color: #141416; }
+html .bibs:not(.none), html .sheet-top .meta .pbib { background: #e11d48 !important; color: #fff !important; }
 html .topbar #statsBtn.on, html .topbar .filters.on > summary { color: #e11d48 !important; border-color: #e11d48 !important; }
 html .topbar .btn:hover, html .topbar #groupSel:hover, html .topbar #q:focus { border-color: #e11d48 !important; }
 html .topbar #groupSel { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b645c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") !important; background-size: 12px !important; background-repeat: no-repeat !important; background-position: right 12px center !important; }
@@ -1893,7 +1893,7 @@ function setupDeck(pair) {
   // 쪽 높이를 화면 높이에 꽉 차게 (상단바·묶음 제목·여백 제외). 화면에서만 크기를 바꿈 (글자 줄바꿈은 그대로)
   const topH = document.querySelector('.topbar').offsetHeight;
   document.documentElement.style.setProperty('--tbh', topH + 'px');
-  const z = Math.max(0.5, Math.min(2, (window.innerHeight - topH - 64) / H));
+  const z = Math.max(0.5, Math.min(2, (window.innerHeight - topH - 26) / H));   // 지원서가 화면 높이를 꽉 채우게
   const total = need(pages.length) * z;
   pair.classList.add('deck');
   pair.classList.toggle('pan', total > avail + 1);
