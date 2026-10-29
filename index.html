@@ -111,9 +111,9 @@ body::before { background: var(--chrome) !important; }
 .filters { position: relative; }
 .filters > summary { list-style: none; display: inline-flex; align-items: center; gap: 4px; user-select: none; }
 .filters > summary::-webkit-details-marker { display: none; }
-.filters > summary::after { content: "▾"; font-size: 11px; color: var(--ink-2); }
+.filters > summary::after { content: ""; width: 10px; height: 10px; background: currentColor; opacity: .7; -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") center/contain no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") center/contain no-repeat; }
 .filters:has(input:checked) > summary { border-color: var(--accent); color: var(--accent); }
-.filters:has(input:checked) > summary::before { content: "●"; font-size: 8px; }
+.filters:has(input:checked) > summary::before, .filters.on > summary::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .filters .pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
   box-shadow: 0 6px 24px rgba(0,0,0,.18); padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; white-space: nowrap; }
 #q { min-width: 0; width: 220px; height: 32px; }
@@ -650,6 +650,50 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
   body.booting .side { display: none !important; }
 }
 @media print { .thumbbar, .boot { display: none !important; } }
+/* ===== 다듬기: 아이콘 · 누르는 크기 · 대비 · 움직임 · 브라우저 기본 모양 ===== */
+.ic { width: 1em; height: 1em; flex: none; vertical-align: -.14em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ic.fill { fill: currentColor; }
+.badge .ic { width: .95em; height: .95em; margin-right: 2px; stroke-width: 2.6; vertical-align: -.15em; }
+.btn .ic, a.btn .ic { margin-left: 2px; }
+.mbar .ic { width: 20px; height: 20px; vertical-align: -4px; } .mbar .mheart .ic { width: 22px; height: 22px; } .mbar .mnav .ic { width: 24px; height: 24px; }
+.mbar .mback { display: inline-flex; align-items: center; gap: 2px; }
+.phnav .ic { width: 28px; height: 28px; }
+.mfootnav span .ic { width: 13px; height: 13px; vertical-align: -2px; }
+#cRotL .ic, #cRotR .ic { width: 18px; height: 18px; }
+.more { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; min-height: 28px; padding: 0 !important; }
+.more .ic { width: 18px; height: 18px; }
+.heart { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 26px; padding-top: 4px !important; padding-bottom: 4px !important; }
+.heart .ic { width: 14px; height: 14px; } .heart.on .ic { color: #e11d48; }
+.heart .hn { font-variant-numeric: tabular-nums; font-weight: 600; }
+.file.video .fimg span .ic { width: 26px; height: 26px; color: #fff; filter: drop-shadow(0 1px 3px rgba(0,0,0,.55)); }
+.fcap .ic { width: 11px; height: 11px; vertical-align: -1px; }
+.rep-on .ic { width: 11px; height: 11px; margin-right: 1px; vertical-align: -1px; }
+.photo-cell .photo a .ic { width: 12px; height: 12px; }
+.crop-btn { display: inline-flex; align-items: center; gap: 3px; padding: 4px 8px !important; min-height: 24px; }
+.crop-btn .ic { width: 12px; height: 12px; }
+.sign .mk { display: none; } .sign label.on .mk { display: flex; justify-content: center; }
+.sign .mk .ic { width: 30px; height: 30px; stroke-width: 3.2; color: #c0352b; }
+/* 누르는 영역 24px 이상 */
+.cbtn { min-height: 26px; padding: 4px 11px; }
+.review-btns .btn, .flags.done .btn { min-height: 26px; }
+.rep-btn { padding: 5px 3px !important; margin: -5px -3px !important; }
+/* 흐린 글자 대비 */
+.group-h span { color: #6b645c !important; }
+/* '동작 줄이기' 설정 존중 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  .boot .bbar i::after, .item.skel .thumb, .item.skel .sk { animation: none !important; }
+  .boot .bsteps li.now::before { animation-duration: 2.4s !important; }
+  .item, .boot .bbar i, .thumbbar i { transition: none !important; }
+}
+/* 브라우저 기본 모양 */
+::selection { background: #ffd0db; color: #141416; }
+:focus-visible { outline: 2px solid #e11d48 !important; outline-offset: 2px; }
+.topbar :focus-visible, .mbar :focus-visible { outline-color: #fb7185 !important; }
+.item:focus-visible { outline-offset: 1px; }
+.side { scrollbar-width: thin; scrollbar-color: #cfc8bf transparent; }
+.side::-webkit-scrollbar { width: 8px; } .side::-webkit-scrollbar-thumb { background: #cfc8bf; border-radius: 99px; } .side::-webkit-scrollbar-track { background: transparent; }
+.stat, .stats .tile .v, .brow .bn, #syncStat { font-variant-numeric: tabular-nums; }
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
@@ -766,10 +810,10 @@ body.stats-open { overflow: hidden; }
   <main class="main" id="main"></main>
 </div>
 <div class="mbar" id="mbar">
-  <button class="mback" id="mBack" aria-label="목록으로">‹ 목록</button>
+  <button class="mback" id="mBack" aria-label="목록으로"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg> 목록</button>
   <div class="mttl" id="mTitle"></div>
-  <button class="mheart" id="mHeart" aria-label="내 하트">♡</button>
-  <button class="mnav" id="mPrev" aria-label="이전 지원자">‹</button><button class="mnav" id="mNext" aria-label="다음 지원자">›</button>
+  <button class="mheart" id="mHeart" aria-label="내 하트"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></button>
+  <button class="mnav" id="mPrev" aria-label="이전 지원자"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><button class="mnav" id="mNext" aria-label="다음 지원자"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
 </div>
 <div class="mfootnav" id="mFootNav"><button id="mPrev2"></button><button id="mNext2"></button></div>
 
@@ -781,13 +825,13 @@ body.stats-open { overflow: hidden; }
 </div>
 <div class="modal" id="phModal" hidden>
   <div class="phbox" role="dialog" aria-label="사진 크게 보기">
-    <div class="phbar"><b id="phTitle"></b><span id="phCount" class="note"></span><div class="spacer"></div><a class="btn" id="phOpen" target="_blank" rel="noopener">드라이브에서 열기 ↗</a><button class="btn" id="phClose">닫기 ✕</button></div>
-    <div class="phstage"><button class="phnav" id="phPrev" aria-label="이전 사진">‹</button><img id="phImg" alt=""><button class="phnav" id="phNext" aria-label="다음 사진">›</button></div>
+    <div class="phbar"><b id="phTitle"></b><span id="phCount" class="note"></span><div class="spacer"></div><a class="btn" id="phOpen" target="_blank" rel="noopener">드라이브에서 열기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a><button class="btn" id="phClose">닫기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div class="phstage"><button class="phnav" id="phPrev" aria-label="이전 사진"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><img id="phImg" alt=""><button class="phnav" id="phNext" aria-label="다음 사진"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div>
   </div>
 </div>
 <div class="modal" id="vidModal" hidden>
   <div class="mbox vidbox" role="dialog" aria-label="지원 영상">
-    <div class="mfoot"><b id="vTitle"></b><div class="spacer"></div><a class="btn" id="vOpen" target="_blank" rel="noopener">드라이브에서 열기 ↗</a><button class="btn" id="vClose">닫기 ✕</button></div>
+    <div class="mfoot"><b id="vTitle"></b><div class="spacer"></div><a class="btn" id="vOpen" target="_blank" rel="noopener">드라이브에서 열기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a><button class="btn" id="vClose">닫기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
     <div class="vframe"><iframe id="vFrame" title="지원 영상" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
     <div class="note">재생이 안 되면 ‘드라이브에서 열기’를 눌러 주세요. (브라우저에 로그인된 구글 계정에 영상 권한이 있어야 재생됩니다)</div>
   </div>
@@ -796,7 +840,7 @@ body.stats-open { overflow: hidden; }
   <div class="mbox logbox" role="dialog" aria-label="활동 기록">
     <div class="mhead"><b>활동 기록</b> · <span id="logInfo"></span> <span class="note">(관리자만 볼 수 있음)</span></div>
     <div class="mfoot"><input type="search" id="logQ" placeholder="계정·행동·지원자 이름으로 찾기"><div class="spacer"></div>
-      <a class="btn" id="logLink" target="_blank" rel="noopener">전체 기록 시트 열기 ↗</a><button class="btn" id="logClose">닫기</button></div>
+      <a class="btn" id="logLink" target="_blank" rel="noopener">전체 기록 시트 열기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a><button class="btn" id="logClose">닫기</button></div>
     <div class="logwrap"><table class="logtbl"><thead><tr><th>시각</th><th>계정</th><th>행동</th><th>대상</th><th>내용</th></tr></thead><tbody id="logBody"></tbody></table></div>
   </div>
 </div>
@@ -807,7 +851,7 @@ body.stats-open { overflow: hidden; }
     <div class="cframe" id="cFrame"><img id="cImg" alt="" draggable="false"><div class="cguide"></div></div>
     <div class="mfoot">
       <span class="mlabel">확대</span><input type="range" id="cZoom" min="1" max="8" step="0.01" value="1">
-      <button class="btn" id="cRotL" title="왼쪽으로 90도 회전">↺</button><button class="btn" id="cRotR" title="오른쪽으로 90도 회전">↻</button>
+      <button class="btn" id="cRotL" title="왼쪽으로 90도 회전" aria-label="왼쪽으로 회전"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button><button class="btn" id="cRotR" title="오른쪽으로 90도 회전" aria-label="오른쪽으로 회전"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
     </div>
     <div class="mfoot">
       <button class="btn" id="cReset">처음대로</button>
@@ -1181,7 +1225,11 @@ function hydrateThumbs() {
   });
 }
 // 지원서 1쪽 제목의 'WE GO HIGH'는 로고 이미지로
-const LOGO = (document.getElementById('logoImg') || {}).src || '';   // 로고는 HTML 쪽에 둠 (Apps Script가 스크립트 속 '//'를 지우기 때문)
+const LOGO = (document.getElementById('logoImg') || {}).src || '';
+const RM = matchMedia('(prefers-reduced-motion: reduce)'), smoothB = () => RM.matches ? 'auto' : 'smooth';   // '동작 줄이기' 설정이면 부드러운 스크롤 끔
+// 아이콘: 한 가지 굵기의 선 아이콘(SVG) — 문자 기호(♡ ‹ › ✕ 등) 대신
+const ICONS = {"heart": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\"/>", "left": "<path d=\"m15 18-6-6 6-6\"/>", "right": "<path d=\"m9 18 6-6-6-6\"/>", "more": "<circle cx=\"12\" cy=\"12\" r=\"1\"/><circle cx=\"19\" cy=\"12\" r=\"1\"/><circle cx=\"5\" cy=\"12\" r=\"1\"/>", "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", "play": "<path d=\"M7 4.5v15l12-7.5z\"/>", "crop": "<path d=\"M6 2v14a2 2 0 0 0 2 2h14\"/><path d=\"M18 22V8a2 2 0 0 0-2-2H2\"/>", "rotl": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/>", "rotr": "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/>", "star": "<path d=\"M12 2.8l2.8 5.7 6.3.9-4.6 4.4 1.1 6.2L12 17.1 6.4 20l1.1-6.2L2.9 9.4l6.3-.9z\"/>", "ext": "<path d=\"M7 7h10v10\"/><path d=\"M7 17 17 7\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "alert": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 8v4.5\"/><path d=\"M12 16h.01\"/>", "clip": "<path d=\"m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48\"/>"};
+const ic = (n, cls = '') => `<svg class="ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;   // 로고는 HTML 쪽에 둠 (Apps Script가 스크립트 속 '//'를 지우기 때문)
 const SHEET_TITLE = 'WE GO HIGH 지원서';   // 지원서 1쪽 제목
 const titleHtml = t => esc(t).replace(/WE\s*GO\s*HIGH/i, `<img class="logo" src="${LOGO}" alt="WE GO HIGH">`);
 const viewUrl = id => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
@@ -1438,13 +1486,13 @@ function groups(list) {
   const g = new Map();
   if (groupBy === 'heartAll' && isAdmin()) {   // 관리자: 전체 하트 수 많은 순
     const by = (x, y) => heartN(y) - heartN(x) || (y.ts || 0) - (x.ts || 0);
-    const m = new Map(); [...list].sort(by).forEach(a => { const n = heartN(a), k = n ? `♥ ${n}개` : '하트 없음'; if (!m.has(k)) m.set(k, { label: k, items: [] }); m.get(k).items.push(a); });
+    const m = new Map(); [...list].sort(by).forEach(a => { const n = heartN(a), k = n ? `하트 ${n}개` : '하트 없음'; if (!m.has(k)) m.set(k, { label: k, items: [] }); m.get(k).items.push(a); });
     return [...m.values()];
   }
   if (groupBy === 'heart' || groupBy === 'heartAll') {   // 내가 하트한 지원자 먼저 (그 안에선 최신 접수 먼저)
     const by = (x, y) => (y.ts || 0) - (x.ts || 0);
     const mine = list.filter(myLike).sort(by), rest = list.filter(a => !myLike(a)).sort(by);
-    return [...(mine.length ? [{ label: `내 하트 ♥`, items: mine }] : []), ...(rest.length ? [{ label: '나머지', items: rest }] : [])];
+    return [...(mine.length ? [{ label: '내 하트', items: mine }] : []), ...(rest.length ? [{ label: '나머지', items: rest }] : [])];
   }
   const keyOf = a => groupBy === 'date' ? dayKey(a.ts) : groupBy === 'school' ? groupSchool(a) : a.gradeN;
   const labelOf = (k, a) => groupBy === 'date' ? dayLabel(a.ts) : k;
@@ -1479,10 +1527,10 @@ function renderSide(gs) {
   side.innerHTML = gs.map((g, gi) => `
     <div class="group-h" data-gi="${gi}">${esc(g.label)} <span>${g.items.length}명</span></div>
     ${g.items.map(a => `
-      <div class="item ${a.key === selected ? 'sel' : ''} ${isHidden(a) ? 'hidden-row' : ''}" data-key="${esc(a.key)}">
-        <button class="more" data-more title="숨김·승인 등" aria-label="더 보기">⋯</button>
+      <div class="item ${a.key === selected ? 'sel' : ''} ${isHidden(a) ? 'hidden-row' : ''}" data-key="${esc(a.key)}" tabindex="0" role="button" aria-label="${esc(a.name)} 지원서 보기"${a.key === selected ? ' aria-current="true"' : ''}>
+        <button class="more" data-more title="메뉴" aria-label="더 보기">${ic('more')}</button>
         <div class="thumb-col"><div class="thumb">${repImg(a)}</div>
-          <button class="heart ${myLike(a) ? 'on' : ''}" data-heart ${heartTitle(a)}>${myLike(a) ? '♥' : '♡'}${isAdmin() && heartN(a) ? ` ${heartN(a)}` : ''}</button></div>
+          <button class="heart ${myLike(a) ? 'on' : ''}" data-heart ${heartTitle(a)}>${ic('heart', myLike(a) ? 'fill' : '')}${isAdmin() && heartN(a) ? `<span class="hn">${heartN(a)}</span>` : ''}</button></div>
         <div style="min-width:0">
           <div class="nm">${esc(a.name) || '(이름 없음)'}${isHidden(a) ? '<span class="badge hide">숨김</span>' : needsReview(a) ? '<span class="badge warn">검토</span>' : ''}${stageBadge(a)}</div>
           <div class="sub">${[a.appNo != null ? '#' + a.appNo : '번호 없음', esc(sideSchool(a))].filter(Boolean).join(' · ')}</div>
@@ -1507,7 +1555,7 @@ const heartTitle = a => { const who = Object.keys(likes[a.key] || {}); return is
 function stageBadge(a) {
   const s = signs[a.key] || {}; const last = [...STAGES].reverse().find(t => s[t]);
   const c = contacts[a.key];
-  return (last ? `<span class="badge ok">${last} ✓</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? '✓ ' : c === '부재' ? '! ' : c === '고사' ? '× ' : ''}${c}</span>` : '');
+  return (last ? `<span class="badge ok">${ic('check')}${last}</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? ic('check') : c === '부재' ? ic('alert') : c === '고사' ? ic('x') : ''}${c}</span>` : '');
 }
 // 사이드바 ⋯ 메뉴 항목
 function menuItems(a) {
@@ -1567,12 +1615,12 @@ const shortLabel = h => (SHORT_LABELS.find(([re]) => re.test(h)) || [0, norm(h).
 function photoCard(f, cap, isRep) {
   return `<div class="file photo${isRep ? ' rep' : ''}">
     <a class="fimg" href="${viewUrl(f.id)}" target="_blank" rel="noopener" title="원본 열기"><span>사진</span><img src="${imgSrc(f.id)}" data-thumb="${esc(f.id)}" data-trim="1" alt="" loading="lazy"></a>
-    <div class="fcap"><span>${esc(cap)}</span>${isRep ? `<span class="no-print"><b class="rep-on">★ 대표</b>${isAdmin() ? ' <button class="rep-btn" data-crop>자르기</button>' : ''}</span>` : isAdmin() ? `<button class="rep-btn no-print" data-rep="${esc(f.id)}">대표로</button>` : ''}</div></div>`;
+    <div class="fcap"><span>${esc(cap)}</span>${isRep ? `<span class="no-print"><b class="rep-on">${ic('star', 'fill')}대표</b>${isAdmin() ? ' <button class="rep-btn" data-crop>자르기</button>' : ''}</span>` : isAdmin() ? `<button class="rep-btn no-print" data-rep="${esc(f.id)}">대표로</button>` : ''}</div></div>`;
 }
 function fileCard(f, cap) {
   return `<a class="file ${f.kind}" href="${viewUrl(f.id)}" target="_blank" rel="noopener"${f.kind === 'video' ? ` data-vid="${esc(f.id)}" data-cap="${esc(cap)}"` : ''}>
-    <div class="fimg"><span>${f.kind === 'video' ? '▶' : f.kind === 'photo' ? '사진' : '📎'}</span><img src="${imgSrc(f.id)}" data-thumb="${esc(f.id)}" alt="" loading="lazy"></div>
-    <div class="fcap"><span>${esc(cap)}</span><span class="no-print">${f.kind === 'video' ? '재생 ▶' : '열기 ↗'}</span></div></a>`;
+    <div class="fimg"><span>${f.kind === 'video' ? ic('play', 'fill') : f.kind === 'photo' ? '사진' : ic('clip')}</span><img src="${imgSrc(f.id)}" data-thumb="${esc(f.id)}" alt="" loading="lazy"></div>
+    <div class="fcap"><span>${esc(cap)}</span><span class="no-print">${f.kind === 'video' ? '재생 ' + ic('play', 'fill') : '열기 ' + ic('ext')}</span></div></a>`;
 }
 function sheetHtml(a) {
   const hidden = isHidden(a);
@@ -1606,7 +1654,7 @@ function sheetHtml(a) {
     blk(`<table>
       <tr>${row('성명', a.name, 2)}<td class="photo-cell" rowspan="5">
         <div class="photo">
-          ${photoOf(a) ? `<a href="${viewUrl(photoOf(a))}" target="_blank" rel="noopener">사진 원본 열기 ↗${repImg(a, '지원자 사진')}</a>${isAdmin() ? '<button class="crop-btn no-print" data-crop>✂ 얼굴 맞추기</button>' : ''}` : '사진 없음'}
+          ${photoOf(a) ? `<a href="${viewUrl(photoOf(a))}" target="_blank" rel="noopener">사진 원본 열기 ${ic('ext')}${repImg(a, '지원자 사진')}</a>${isAdmin() ? '<button class="crop-btn no-print" data-crop>' + ic('crop') + ' 얼굴 맞추기</button>' : ''}` : '사진 없음'}
         </div></td></tr>
       <tr>${row('생년월일', fmtBirth(a.b) || a.birth, 2)}</tr>
       <tr>${row('국적', a.nationality, 2)}</tr>
@@ -1634,7 +1682,7 @@ function sheetHtml(a) {
     ...(etc.length ? [blk(`<div class="files">${etc.map(f => fileCard(f, f.label.slice(0, 12))).join('')}</div>`)] : []),
     blk(`<div class="memo"><div class="sec" style="margin-top:0">심사 메모</div>
       <textarea data-memo placeholder="${SYNC ? '여기에 메모하면 시트에 저장되어 함께 보는 사람들과 공유됩니다' : '여기에 메모하면 이 브라우저에 저장됩니다'}">${esc(memos[a.key] || '')}</textarea></div>
-      <div class="sign">${STAGES.map(t => `<label class="${(signs[a.key] || {})[t] ? 'on' : ''}"><input type="checkbox" data-sign="${t}"${(signs[a.key] || {})[t] ? ' checked' : ''}><span class="t">${t}</span><span class="mk">✓</span></label>`).join('')}</div>`, 'end'),
+      <div class="sign">${STAGES.map(t => `<label class="${(signs[a.key] || {})[t] ? 'on' : ''}"><input type="checkbox" data-sign="${t}"${(signs[a.key] || {})[t] ? ' checked' : ''}><span class="t">${t}</span><span class="mk">${ic('check')}</span></label>`).join('')}</div>`, 'end'),
   ];
   return `<section class="pair" id="s-${esc(a.key)}" data-key="${esc(a.key)}">${blocks.join('')}</section>`;
 }
@@ -1744,7 +1792,7 @@ function setupDeck(pair) {
   pair.scrollLeft = deckPos[pair.dataset.key] || 0;
 }
 function moveDeck(pair, d) {
-  pair.scrollBy({ left: d * (+pair.dataset.step || 600), behavior: 'smooth' });
+  pair.scrollBy({ left: d * (+pair.dataset.step || 600), behavior: smoothB() });
 }
 // 끌어서 옆으로 넘기기 (입력칸·버튼·링크 위에서는 끌지 않음)
 let panDrag = null;
@@ -1799,7 +1847,7 @@ function openViewer(key, silent, startSheet) {   // startSheet: 누른 쪽부터
     <div class="vzoom"><button class="btn" data-vz="-1" title="작게 (-)">−</button>
       <select id="vzSel" title="크기">${ZOOMS.map(z => `<option value="${z}">${z === 'fit' ? '폭 맞춤' : Math.round(z * 100) + '%'}</option>`).join('')}</select>
       <button class="btn" data-vz="1" title="크게 (+)">+</button></div>
-    <button class="btn" data-vclose title="닫기 (Esc)">닫기 ✕</button></div><div class="vpages"></div>`;
+    <button class="btn" data-vclose title="닫기 (Esc)">닫기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="vpages"></div>`;
   $('#main').appendChild(ov);
   document.body.classList.add('viewer-open');
   const vp = ov.querySelector('.vpages');
@@ -2164,10 +2212,10 @@ $('#side').onclick = e => {
   if (it && isMobile()) { openMobile(it.dataset.key); return; }
   if (it) { selected = it.dataset.key; document.querySelectorAll('.item').forEach(x => x.classList.toggle('sel', x === it));
     const el = document.getElementById('s-' + selected);
-    if (el) { deckPos[selected] = 0; el.scrollTo({ left: 0, behavior: 'smooth' }); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }   // 항상 1쪽부터
+    if (el) { deckPos[selected] = 0; el.scrollTo({ left: 0, behavior: smoothB() }); el.scrollIntoView({ behavior: smoothB(), block: 'start' }); }   // 항상 1쪽부터
     return; }
   const gh = e.target.closest('.group-h');
-  if (gh) { const t = document.querySelectorAll('.grp-title')[+gh.dataset.gi]; if (t) t.scrollIntoView({ behavior: 'smooth' }); }
+  if (gh) { const t = document.querySelectorAll('.grp-title')[+gh.dataset.gi]; if (t) t.scrollIntoView({ behavior: smoothB() }); }
 };
 $('#main').addEventListener('click', e => {
   const pf = e.target.closest('.file.photo a.fimg, .photo-cell .photo a');
@@ -2226,10 +2274,10 @@ function markMobileCur() {
   document.querySelectorAll('.pair').forEach(p => p.classList.toggle('m-cur', p.dataset.key === selected));
   const a = list[i], prev = list[i - 1], next = list[i + 1];
   $('#mTitle').innerHTML = `${esc(a.name) || '(이름 없음)'}<small>${a.appNo != null ? '#' + a.appNo + ' · ' : ''}${i + 1} / ${list.length}</small>`;
-  $('#mHeart').textContent = myLike(a) ? '♥' : '♡';
+  $('#mHeart').innerHTML = ic('heart', myLike(a) ? 'fill' : '');
   $('#mPrev').disabled = $('#mPrev2').disabled = !prev; $('#mNext').disabled = $('#mNext2').disabled = !next;
-  $('#mPrev2').innerHTML = prev ? `<span>‹ 이전</span><b>${esc(prev.name)}</b>` : '';
-  $('#mNext2').innerHTML = next ? `<span>다음 ›</span><b>${esc(next.name)}</b>` : '';
+  $('#mPrev2').innerHTML = prev ? `<span>${ic('left')} 이전</span><b>${esc(prev.name)}</b>` : '';
+  $('#mNext2').innerHTML = next ? `<span>다음 ${ic('right')}</span><b>${esc(next.name)}</b>` : '';
 }
 function closeMobile() {
   if (!document.body.classList.contains('m-detail')) return;
@@ -2390,6 +2438,24 @@ function setContact(key, v) {
   saveField(key, 'contact', v);
   rerender();
 }
+// ===================== 키보드: 사이드바 카드 고르기 · ↑/↓로 다음 지원자 =====================
+$('#side').addEventListener('keydown', e => {
+  const it = e.target.closest('.item'); if (!it || e.target !== it) return;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); it.click(); }
+});
+function stepApplicant(d) {
+  const list = mOrder(); if (!list.length) return;
+  const i = list.findIndex(x => x.key === selected), n = list[i < 0 ? (d > 0 ? 0 : list.length - 1) : i + d]; if (!n) return;
+  if (isMobile() && document.body.classList.contains('m-detail')) { openMobile(n.key, true); return; }
+  const it = document.querySelector(`.item[data-key="${CSS.escape(n.key)}"]`); if (!it) return;
+  it.click(); it.focus({ preventScroll: true }); it.scrollIntoView({ block: 'nearest' });
+}
+document.addEventListener('keydown', e => {
+  if (!['ArrowDown', 'ArrowUp'].includes(e.key) || e.altKey || e.metaKey || e.ctrlKey) return;
+  if (e.target.closest('input, textarea, select, [contenteditable="true"]') || viewerKey || phState || document.getElementById('stats')
+    || !$('#vidModal').hidden || !$('#cropModal').hidden || !$('#logModal').hidden || document.getElementById('itemMenu') || !DATA) return;
+  e.preventDefault(); stepApplicant(e.key === 'ArrowDown' ? 1 : -1);
+});
 // ===================== 처음 화면으로 (왼쪽 위 제목) =====================
 // 열려 있는 창을 모두 닫고, 검색·필터를 비우고, 맨 위로 (정렬 방식은 그대로)
 function goHome() {
@@ -2498,7 +2564,7 @@ function openStats() {
   let ov = document.getElementById('stats');
   if (!ov) {
     ov = document.createElement('div'); ov.id = 'stats'; ov.className = 'stats';
-    ov.innerHTML = `<div class="sbar"><h2>지원자 통계</h2><span class="note"></span><span class="spacer"></span><button class="btn" data-sclose>닫기 ✕</button></div><div class="sgrid" style="display:block"><div class="sbody"></div></div>`;
+    ov.innerHTML = `<div class="sbar"><h2>지원자 통계</h2><span class="note"></span><span class="spacer"></span><button class="btn" data-sclose>닫기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div><div class="sgrid" style="display:block"><div class="sbody"></div></div>`;
     document.body.appendChild(ov);
     ov.addEventListener('click', e => {
       if (e.target.closest('[data-sclose]')) { closeStats(); return; }
@@ -2635,7 +2701,7 @@ function webLoad(first) {
     bootEnd();
     if (needLogin(err)) return showLogin();
     $('#main').innerHTML = `<div class="empty"><h2>지원서를 열 수 없습니다</h2><p>${esc(String(err && err.message || err))}</p>
-      <p class="note">잠시 뒤 새로고침(⟳)해 보고, 계속되면 PD에게 알려 주세요.</p></div>`;
+      <p class="note">잠시 뒤 오른쪽 위 새로고침 버튼을 눌러 보고, 계속되면 PD에게 알려 주세요.</p></div>`;
   });
 }
 // ===================== 이메일 인증 로그인 =====================
