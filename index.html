@@ -612,6 +612,44 @@ mark.hl.hc0 { --hl: #ffe94d; } mark.hl.hc1 { --hl: #8ef0a8; } mark.hl.hc2 { --hl
 #appTitle { cursor: pointer; border-radius: 6px; }
 #appTitle:hover { color: #fb7185 !important; }
 body.login-mode #appTitle { cursor: default; } body.login-mode #appTitle:hover { color: #fff !important; }
+/* 불러오는 화면 */
+.boot { max-width: 440px; margin: 12vh auto 0; text-align: center; padding: 36px 32px 30px; background: #fff; border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 12px 40px rgba(0,0,0,.06); }
+.boot .blogo { height: 46px; width: auto; display: block; margin: 0 auto 14px; }
+.boot .btitle { font-size: 17px; font-weight: 800; margin-bottom: 18px; }
+.boot .bbar { height: 6px; border-radius: 99px; background: #f1ede8; overflow: hidden; }
+.boot .bbar i { display: block; height: 100%; width: 6%; border-radius: 99px; background: linear-gradient(90deg, #fb7185, #e11d48); transition: width .35s ease; position: relative; overflow: hidden; }
+.boot .bbar i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); transform: translateX(-100%); animation: bshine 1.3s infinite; }
+@keyframes bshine { to { transform: translateX(100%); } }
+.boot .bsteps { list-style: none; padding: 0; margin: 18px 0 0; display: flex; justify-content: center; gap: 18px; font-size: 13px; color: #a8a29e; }
+.boot .bsteps li { display: flex; align-items: center; gap: 6px; }
+.boot .bsteps li::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #e7e2dc; box-sizing: border-box; }
+.boot .bsteps li.now { color: #141416; font-weight: 700; }
+.boot .bsteps li.now::before { border-color: #fecdd6; border-top-color: #e11d48; animation: bspin .8s linear infinite; }
+.boot .bsteps li.done { color: #57534e; }
+.boot .bsteps li.done::before { border: 0; background: #e11d48 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/12px no-repeat; }
+@keyframes bspin { to { transform: rotate(360deg); } }
+.boot .bnote { margin-top: 14px; font-size: 12.5px; color: #8a837b; min-height: 1.4em; }
+/* 목록 자리 미리보기 (뼈대) */
+.item.skel { pointer-events: none; }
+.item.skel .thumb, .item.skel .sk { background: linear-gradient(90deg, #efebe6 25%, #f7f4f0 50%, #efebe6 75%); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; }
+.item.skel .sk { display: block; height: 11px; border-radius: 6px; margin: 4px 0 8px; }
+.item.skel .sk.w60 { width: 60%; height: 15px; } .item.skel .sk.w80 { width: 80%; } .item.skel .sk.w50 { width: 50%; }
+.item.skel .sk.blk { height: 44px; border-radius: 8px; margin-top: 10px; }
+@keyframes skel { to { background-position: -200% 0; } }
+body.booting .side .group-h { display: none; }
+/* 사진 불러오기 진행 막대 (상단바 바로 아래) */
+.thumbbar { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); height: 2px; z-index: 41; background: transparent; pointer-events: none; }
+.thumbbar[hidden] { display: none; }
+.thumbbar i { display: block; height: 100%; width: 0; background: #e11d48; transition: width .3s ease, opacity .5s; }
+.thumbbar.fin i { width: 100% !important; opacity: 0; }
+body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
+@media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) {
+  .boot { margin: 8vh 14px 0; padding: 28px 20px 24px; }
+  .boot .bsteps { gap: 10px; font-size: 12px; }
+  body.booting .main { display: block !important; }
+  body.booting .side { display: none !important; }
+}
+@media print { .thumbbar, .boot { display: none !important; } }
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
@@ -720,6 +758,7 @@ body.stats-open { overflow: hidden; }
   <button class="btn icon" id="reloadBtn" title="데이터 다시 불러오기 (CSV)" aria-label="데이터 다시 불러오기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
   </div>
 </div>
+<div class="thumbbar" id="thumbBar" hidden><i></i></div>
 <div class="notice" id="notice" hidden><span id="noticeText">지금 보이는 지원자는 <b>가상 예시 데이터</b>입니다.</span><button class="btn primary" id="noticeLoad">내 시트 불러오기</button></div>
 
 <div class="layout">
@@ -1094,12 +1133,16 @@ function showThumb(id, uri) {
 }
 function loadThumb(id) {
   if (IMG[id]) return Promise.resolve(IMG[id]);
-  if (!thumbWait[id]) thumbWait[id] = idb.get('800:' + id).then(hit => {
-    if (hit) { showThumb(id, hit); return hit; }
-    return new Promise(res => { thumbQueue.push([id, res]); pumpThumbs(); });
-  });
+  if (!thumbWait[id]) {
+    const first = !thumbTried.has(id); thumbTried.add(id); if (first) thumbTick(1, 0);
+    thumbWait[id] = idb.get('800:' + id).then(hit => {
+      if (hit) { showThumb(id, hit); return hit; }
+      return new Promise(res => { thumbQueue.push([id, res]); pumpThumbs(); });
+    }).then(r => { if (!thumbCounted.has(id)) { thumbCounted.add(id); thumbTick(0, 1); } return r; });
+  }
   return thumbWait[id];
 }
+const thumbTried = new Set(), thumbCounted = new Set();   // 진행 표시용 (다시 시도하는 사진은 한 번만 셈)
 // 못 받은 사진은 잠시 뒤 다시 시도 (새 지원자는 서버의 사진 목록이 갱신될 때까지 몇 분 걸릴 수 있음)
 const thumbTries = {};
 function retryThumb(id) {
@@ -2528,10 +2571,52 @@ const SAMPLE = [
 // 시트 데이터가 함께 들어 있는 파일이면 그걸 먼저 보여줌 (공개 아티팩트에는 넣지 않음)
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (DATA) { const y = window.scrollY; render(); window.scrollTo(0, y); } });
 const EMB = document.getElementById('embedded');
+// ===================== 불러오는 화면 =====================
+// 단계: 서버 연결 → 지원서 받기 → 화면 정리. 받는 동안은 막대가 천천히 차오르고, 끝나면 바로 목록이 뜸
+let bootT = null;
+function bootShow() {
+  document.body.classList.add('booting');
+  $('#main').innerHTML = `<div class="boot" role="status" aria-live="polite">
+    <img class="blogo" src="${LOGO}" alt="WE GO HIGH">
+    <div class="btitle">지원서를 불러오고 있어요</div>
+    <div class="bbar"><i id="bootBar"></i></div>
+    <ol class="bsteps" id="bootSteps"><li>서버 연결</li><li>지원서 받기</li><li>화면 정리</li></ol>
+    <div class="bnote" id="bootNote">보통 몇 초면 끝나요</div></div>`;
+  $('#side').innerHTML = Array.from({ length: 7 }, () => `<div class="item skel"><div class="thumb-col"><div class="thumb"></div></div><div style="flex:1"><i class="sk w60"></i><i class="sk w80"></i><i class="sk w50"></i><i class="sk blk"></i></div></div>`).join('');
+  bootStep(0, 6);
+  let p = 12; const t0 = Date.now();
+  clearInterval(bootT);
+  bootT = setInterval(() => {   // 서버 응답을 기다리는 동안 75%까지 점점 느리게
+    p += (75 - p) * 0.06; const b = document.getElementById('bootBar'); if (b) b.style.width = p + '%';
+    const sec = Math.round((Date.now() - t0) / 1000), n = document.getElementById('bootNote');
+    if (n && sec >= 3) n.textContent = sec < 15 ? `${sec}초째 받는 중… 지원자가 많으면 조금 더 걸려요` : `${sec}초째… 인터넷이 느리거나 서버가 바쁜 것 같아요. 조금만 더 기다려 주세요`;
+  }, 200);
+}
+function bootStep(i, pct) {
+  const ol = document.getElementById('bootSteps'); if (!ol) return;
+  [...ol.children].forEach((li, k) => { li.className = k < i ? 'done' : k === i ? 'now' : ''; });
+  const b = document.getElementById('bootBar'); if (b && pct != null) b.style.width = pct + '%';
+}
+function bootEnd() { clearInterval(bootT); bootT = null; document.body.classList.remove('booting'); }
+// 사진 불러오기 진행 (상단바 아래 얇은 막대 + '사진 n/N')
+const thumbProg = { total: 0, done: 0, t: null };
+function thumbTick(addTotal, addDone) {
+  thumbProg.total += addTotal; thumbProg.done += addDone;
+  clearTimeout(thumbProg.t);
+  thumbProg.t = setTimeout(() => {
+    const { total, done } = thumbProg, bar = $('#thumbBar');
+    if (!bar) return;
+    if (!total || done >= total) { bar.classList.add('fin'); setTimeout(() => { if (thumbProg.done >= thumbProg.total) { bar.hidden = true; bar.classList.remove('fin'); } }, 600); if (COLLECTED) setSyncStat(collectedText()); return; }
+    bar.hidden = false; bar.firstElementChild.style.width = (done / total * 100).toFixed(1) + '%';
+    setSyncStat(`사진 불러오는 중 ${done}/${total}`);
+  }, 120);
+}
 function webLoad(first) {
-  if (first) $('#main').innerHTML = '<div class="empty">지원서를 불러오는 중…</div>';
+  if (first) bootShow();
   const y = window.scrollY, x = {}; document.querySelectorAll('.pair').forEach(p => { x[p.dataset.key] = p.scrollLeft; });
+  if (first) setTimeout(() => bootStep(1, 15), 250);
   return call('getInitial').then(d => {
+    if (first) { bootStep(2, 88); }
     VIEWER = d.viewer; document.body.classList.remove('login-mode');
     $('#adminBtn').hidden = !isAdmin();
     $('#groupSel option[value="heartAll"]').hidden = !isAdmin();
@@ -2545,7 +2630,9 @@ function webLoad(first) {
     prefetchAll();
     if (!first) { window.scrollTo(0, y); document.querySelectorAll('.pair').forEach(p => { if (x[p.dataset.key]) p.scrollLeft = x[p.dataset.key]; }); }
     setSyncStat(collectedText());
+    if (first) { bootStep(3, 100); bootEnd(); }
   }).catch(err => {
+    bootEnd();
     if (needLogin(err)) return showLogin();
     $('#main').innerHTML = `<div class="empty"><h2>지원서를 열 수 없습니다</h2><p>${esc(String(err && err.message || err))}</p>
       <p class="note">잠시 뒤 새로고침(⟳)해 보고, 계속되면 PD에게 알려 주세요.</p></div>`;
