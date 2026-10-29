@@ -741,7 +741,7 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
 /* ===== 통계 2차: 빈칸 없는 배치 · 차분한 막대 · 일별 그래프 ===== */
 .stats .scols { columns: 4 300px; column-gap: 14px; padding-top: 14px; }
 .stats .scols > .card { break-inside: avoid; display: block; width: 100%; margin: 0 0 14px; }
-.stats .sdaily { margin-top: 14px; }
+.stats .sdaily { margin-top: 0; }
 .stats .card h3 + .cap { margin-bottom: 10px; }
 .brow .bt { height: 8px; border-radius: 99px !important; background: #f1ede8 !important; }
 .brow .bf { background: #57534e !important; border-radius: 99px !important; }
@@ -751,7 +751,7 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
 .stats .tile { display: flex; flex-direction: column; justify-content: center; }
 .stats .tile .v { letter-spacing: -.5px; }
 /* 일별 접수 */
-.dch { display: flex; align-items: stretch; gap: 6px; height: 190px; padding-top: 6px; }
+.dch { display: flex; align-items: stretch; gap: 6px; height: 150px; padding-top: 6px; }
 .dc { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .dbar { flex: 1; position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid #e5e0d8; }
 .dbar i { display: block; width: min(100%, 38px); background: #57534e; border-radius: 6px 6px 0 0; }
@@ -2679,7 +2679,6 @@ function renderStats() {
       <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">국내 지원자 기준</div></div>
       <div class="tile"><div class="k">지원 학교</div><div class="v">${schools.filter(r => !/미기재/.test(r[0])).length}<small>곳</small></div><div class="d">국내 재학생의 재학 학교</div></div>
     </div>
-    <div class="card sdaily"><div class="sdh"><div><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div></div></div>${dailyCols(valid)}</div>
     <div class="scols">
       <div class="card a-donut"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 6곳</div>${donut(schools, enrolled.length)}</div>
       <div class="card a-next"><h3>입학 예정자(중3)의 진학 예정 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
@@ -2690,7 +2689,9 @@ function renderStats() {
         <h3 style="margin-top:22px">연락 상태</h3><div class="cap">전체 ${N}명</div>${barList(contactRows, N, { click: fq('contact', contactV) })}</div>
       <div class="card a-region"><h3>거주 지역</h3><div class="cap">국내 ${dom.length}명 · 주소 기준</div>${barList(regions, dom.length)}</div>
       ${isAdmin() ? `<div class="card a-heart"><h3>하트 많은 지원자 <span class="note">· 관리자만</span></h3><div class="cap">하트 누른 스태프 ${new Set(Object.values(likes).flatMap(o => Object.keys(o))).size}명 · 누르면 목록에서 보기</div>${barList(valid.filter(a => heartN(a)).sort((x, y) => heartN(y) - heartN(x)).slice(0, 12).map(a => [a.name, heartN(a)]), Math.max(1, new Set(Object.values(likes).flatMap(o => Object.keys(o))).size), { long: true, click: k => k, noPct: true })}</div>` : ''}
-    </div>`;
+    </div>
+    <div class="card sdaily"><div class="sdh"><div><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div></div></div>${dailyCols(valid)}</div>
+  `;
   ov.querySelector('.sbar .note').textContent = `숨김 제외 ${N}명 · 수집 ${COLLECTED || hhmm()}`;
 }
 function openStats() {
