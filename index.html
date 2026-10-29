@@ -738,6 +738,33 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
 @media screen and (max-width: 1300px) { .ahs { display: none; } }
 @media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) { .ahead { display: none; } .ablock { margin: 0; } }
 @media print { .ahead, .fchips, .fsum { display: none !important; } .ablock { margin: 0 !important; } }
+/* ===== 통계 2차: 빈칸 없는 배치 · 차분한 막대 · 일별 그래프 ===== */
+.stats .scols { columns: 4 300px; column-gap: 14px; padding-top: 14px; }
+.stats .scols > .card { break-inside: avoid; display: block; width: 100%; margin: 0 0 14px; }
+.stats .sdaily { margin-top: 14px; }
+.stats .card h3 + .cap { margin-bottom: 10px; }
+.brow .bt { height: 8px; border-radius: 99px !important; background: #f1ede8 !important; }
+.brow .bf { background: #57534e !important; border-radius: 99px !important; }
+.brow.click:hover .bf { background: #e11d48 !important; }
+.brow .bn { font-weight: 700; } .brow .bn small { font-weight: 400; color: #8a837b; }
+.brow.zero { opacity: .5; }
+.stats .tile { display: flex; flex-direction: column; justify-content: center; }
+.stats .tile .v { letter-spacing: -.5px; }
+/* 일별 접수 */
+.dch { display: flex; align-items: stretch; gap: 6px; height: 190px; padding-top: 6px; }
+.dc { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dbar { flex: 1; position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid #e5e0d8; }
+.dbar i { display: block; width: min(100%, 38px); background: #57534e; border-radius: 6px 6px 0 0; }
+.dbar .dv { font-size: 12px; font-weight: 700; color: #44403c; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+.dc:hover .dbar i { background: #3f3a36; }
+.dc.today .dbar i { background: #e11d48; } .dc.today .dbar .dv { color: #e11d48; }
+.dx { height: 34px; text-align: center; font-size: 11.5px; color: #6b645c; padding-top: 5px; line-height: 1.25; white-space: nowrap; }
+.dx b { display: block; font-weight: 600; color: #44403c; } .dx span { font-size: 10.5px; }
+.dx.sun span { color: #dc2626; } .dx.sat span { color: #2563eb; } .dc.today .dx span { color: #e11d48; font-weight: 700; }
+.dch.many { gap: 3px; } .dch.many .dbar .dv { font-size: 10px; }
+@media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) {
+  .stats .scols { columns: 1; } .dch { height: 160px; gap: 3px; } .dbar .dv { font-size: 10px; } .dx { font-size: 10px; }
+}
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
@@ -2587,8 +2614,8 @@ function barList(rows, total, opts = {}) {
   return `<div class="blist ${opts.long ? 'long' : ''}">${rows.map(([k, n]) => {
     const pct = total ? Math.round(n / total * 100) : 0;
     const q = opts.click && !/^그 외/.test(k) ? opts.click(k) : '';
-    return `<div class="brow ${q ? 'click' : ''}" ${q ? `data-q="${esc(q)}"` : ''} title="${esc(k)} · ${n}명 (${pct}%)${q ? ' — 누르면 목록에서 보기' : ''}">
-      <span class="bl">${esc(k)}</span><span class="bt"><span class="bf" style="width:${(n / max * 100).toFixed(1)}%;display:block${n ? '' : ';min-width:0'}"></span></span><span class="bn">${n}<small>${pct}%</small></span></div>`;
+    return `<div class="brow ${q ? 'click' : ''} ${n ? '' : 'zero'}" ${q ? `data-q="${esc(q)}"` : ''} title="${esc(k)} · ${n}명 (${pct}%)${q ? ' — 누르면 목록에서 보기' : ''}">
+      <span class="bl">${esc(k)}</span><span class="bt"><span class="bf" style="width:${(n / max * 100).toFixed(1)}%;display:block${n ? '' : ';min-width:0'}"></span></span><span class="bn">${n}${opts.noPct ? '' : `<small>${pct}%</small>`}</span></div>`;
   }).join('')}</div>`;
 }
 function dailyCols(list) {
@@ -2597,10 +2624,14 @@ function dailyCols(list) {
   const cnt = new Map(); list.forEach(a => { if (a.ts) { const k = dayKey(a.ts); cnt.set(k, (cnt.get(k) || 0) + 1); } });
   const out = [], d = new Date(days[0].getFullYear(), days[0].getMonth(), days[0].getDate()), end = new Date();
   for (; d <= end; d.setDate(d.getDate() + 1)) out.push([new Date(d), cnt.get(dayKey(d)) || 0]);
-  const max = Math.max(...out.map(x => x[1])), step = Math.max(1, Math.ceil(out.length / 10));
-  const maxI = out.findIndex(x => x[1] === max), lastI = out.length - 1;
-  return `<div class="cols">${out.map(([dt, n], i) => `<div class="c" title="${dayLabel(dt)} · ${n}명"><i style="height:${max ? n / max * 100 : 0}%"></i>${(i === maxI || i === lastI) && n ? `<b style="bottom:calc(${n / max * 100}% + 2px)">${n}</b>` : ''}</div>`).join('')}</div>
-    <div class="cols-x">${out.map(([dt], i) => `<span>${i % step === 0 || i === lastI ? `${dt.getMonth() + 1}/${dt.getDate()}` : ''}</span>`).join('')}</div>`;
+  const max = Math.max(1, ...out.map(x => x[1])), many = out.length > 21, today = dayKey(new Date());
+  const step = Math.max(1, Math.ceil(out.length / 14));
+  return `<div class="dch ${many ? 'many' : ''}">${out.map(([dt, n], i) => {
+    const isT = dayKey(dt) === today, wd = dt.getDay();
+    return `<div class="dc ${isT ? 'today' : ''}" title="${dayLabel(dt)} · ${n}명">
+      <div class="dbar"><span class="dv">${n || ''}</span><i style="height:${n ? Math.max(4, n / max * 100) : 0}%"></i></div>
+      <div class="dx ${wd === 0 ? 'sun' : wd === 6 ? 'sat' : ''}">${i % step === 0 || isT ? `<b>${dt.getMonth() + 1}/${dt.getDate()}</b><span>${isT ? '오늘' : DOW[wd]}</span>` : ''}</div></div>`;
+  }).join('')}</div>`;
 }
 // 학교 비중 원형 그래프: 상위 6곳 + 그 외 (색은 순서 고정)
 const DONUT_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'], DONUT_REST = '#d6d3d1';
@@ -2648,17 +2679,17 @@ function renderStats() {
       <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">국내 지원자 기준</div></div>
       <div class="tile"><div class="k">지원 학교</div><div class="v">${schools.filter(r => !/미기재/.test(r[0])).length}<small>곳</small></div><div class="d">국내 재학생의 재학 학교</div></div>
     </div>
-    <div class="slay ${isAdmin() ? 'adm' : ''}">
+    <div class="card sdaily"><div class="sdh"><div><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div></div></div>${dailyCols(valid)}</div>
+    <div class="scols">
       <div class="card a-donut"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 6곳</div>${donut(schools, enrolled.length)}</div>
-      <div class="card a-list"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
       <div class="card a-next"><h3>입학 예정자(중3)의 진학 예정 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
+      <div class="card a-list"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
       <div class="card a-age"><h3>학년</h3><div class="cap">전체 ${N}명</div>${barList(grades, N)}
         <h3 style="margin-top:22px">출생연도</h3><div class="cap">전체 ${N}명</div>${barList(years, N)}</div>
       <div class="card a-stage"><h3>심사 진행</h3><div class="cap">전체 ${N}명 · 누르면 그 사람들만 목록에서 보기</div>${barList(stageRows, N, { click: fq('stage', stageV) })}
         <h3 style="margin-top:22px">연락 상태</h3><div class="cap">전체 ${N}명</div>${barList(contactRows, N, { click: fq('contact', contactV) })}</div>
       <div class="card a-region"><h3>거주 지역</h3><div class="cap">국내 ${dom.length}명 · 주소 기준</div>${barList(regions, dom.length)}</div>
-      ${isAdmin() ? `<div class="card a-heart"><h3>하트 많은 지원자 <span class="note">· 관리자만</span></h3><div class="cap">스태프 하트 합계 · %는 하트를 누른 스태프 ${new Set(Object.values(likes).flatMap(o => Object.keys(o))).size}명 중 · 누르면 목록에서 보기</div>${barList(valid.filter(a => heartN(a)).sort((x, y) => heartN(y) - heartN(x)).slice(0, 12).map(a => [a.name, heartN(a)]), Math.max(1, new Set(Object.values(likes).flatMap(o => Object.keys(o))).size), { long: true, click: k => k })}</div>` : ''}
-      <div class="card a-daily"><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div>${dailyCols(valid)}</div>
+      ${isAdmin() ? `<div class="card a-heart"><h3>하트 많은 지원자 <span class="note">· 관리자만</span></h3><div class="cap">하트 누른 스태프 ${new Set(Object.values(likes).flatMap(o => Object.keys(o))).size}명 · 누르면 목록에서 보기</div>${barList(valid.filter(a => heartN(a)).sort((x, y) => heartN(y) - heartN(x)).slice(0, 12).map(a => [a.name, heartN(a)]), Math.max(1, new Set(Object.values(likes).flatMap(o => Object.keys(o))).size), { long: true, click: k => k, noPct: true })}</div>` : ''}
     </div>`;
   ov.querySelector('.sbar .note').textContent = `숨김 제외 ${N}명 · 수집 ${COLLECTED || hhmm()}`;
 }
