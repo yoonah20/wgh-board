@@ -234,6 +234,7 @@ textarea.paste { width: 100%; height: 90px; border: 1px solid var(--line); borde
 .pair.deck.dragging * { user-select: none; }
 .deck-spacer { height: 1px; }
 .pair, .grp-title { scroll-margin-top: calc(var(--tbh, 56px) + 14px); }
+.ablock { scroll-margin-top: calc(var(--tbh, 56px) + 6px); }
 .pair.deck .sheet { box-shadow: 0 2px 10px rgba(0,0,0,.15); }
 .pair.deck .sheet { position: absolute; top: 0; left: 0; margin: 0; transform-origin: 0 0; }
 .pair.deck .sheet.back { box-shadow: 0 1px 6px rgba(0,0,0,.18); cursor: pointer; }
@@ -694,6 +695,49 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
 .side { scrollbar-width: thin; scrollbar-color: #cfc8bf transparent; }
 .side::-webkit-scrollbar { width: 8px; } .side::-webkit-scrollbar-thumb { background: #cfc8bf; border-radius: 99px; } .side::-webkit-scrollbar-track { background: transparent; }
 .stat, .stats .tile .v, .brow .bn, #syncStat { font-variant-numeric: tabular-nums; }
+/* ===== 외관 2차: 번호표 · 카드 정리 · 필터 칩 · 날짜 헤더 · 지원자 헤더 바 ===== */
+.bibs { display: inline-block; background: #141416; color: #fff; font-weight: 800; font-size: 11px; line-height: 1; padding: 3px 5px; border-radius: 4px; font-variant-numeric: tabular-nums; vertical-align: 2px; margin-right: 6px; letter-spacing: .2px; }
+.bibs.none { background: #fff; color: #a8a29e; border: 1px dashed #cfc8bf; font-weight: 600; padding: 2px 4px; }
+.item .sub.sch { font-size: 12.5px; color: #57534e; }
+.item .chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.item .chip { font-size: 11.5px; padding: 1px 7px; border-radius: 6px; background: #f3f1ee; color: #57534e; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.item .srow { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; } .item .srow .badge { margin-left: 0; }
+.item .nm { padding-right: 26px; }
+.fchips { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 12px 2px; align-items: center; }
+.fchip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; background: #fff; border: 1px solid #fecdd6; color: #be123c; border-radius: 99px; padding: 3px 5px 3px 10px; font-weight: 600; cursor: pointer; min-height: 26px; }
+.fchip i { width: 16px; height: 16px; border-radius: 50%; background: #ffe4ea; display: inline-flex; align-items: center; justify-content: center; }
+.fchip i .ic { width: 10px; height: 10px; stroke-width: 3; }
+.fchip:hover { border-color: #e11d48; }
+.fclear { border: 0; background: none; font-size: 12px; color: #6b645c; text-decoration: underline; cursor: pointer; padding: 4px 2px; }
+.fsum { font-size: 12px; color: #6b645c; padding: 4px 16px 2px; }
+.group-h .gl { color: inherit !important; } .group-h .gl b { font-weight: 700; } .group-h .gl b.sun { color: #dc2626; } .group-h .gl b.sat { color: #2563eb; }
+.group-h .dtag { font-size: 10.5px; font-weight: 800; background: #e11d48; color: #fff !important; border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 1px; }
+.group-h .dtag.y { background: #57534e; }
+.sheet-top .meta .pbib { display: inline-block; background: #141416; color: #fff; font-family: var(--font-ui); font-weight: 800; font-size: 13px; padding: 3px 7px; border-radius: 5px; letter-spacing: .3px; line-height: 1.2; margin-bottom: 3px; }
+/* 지원자 헤더 바 */
+.ablock { margin: 0 auto 32px; }
+.ablock .pair { margin-bottom: 0 !important; }
+.ahead { position: sticky; top: var(--tbh, 56px); z-index: 20; display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 0 0 14px 14px; box-shadow: 0 2px 10px rgba(0,0,0,.08); padding: 8px 14px; margin: 0 0 14px; }
+.ahph { width: 34px; height: 45px; border-radius: 6px; background: #d9d4cd; position: relative; overflow: hidden; flex: none; }
+.ahph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ahwho { min-width: 0; } .ahn { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ahn b { font-weight: 800; }
+.ahs { font-size: 12px; color: #6b6b72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ahheart { width: 34px; min-width: 34px; height: 34px; border-radius: 99px; border: 1px solid #f1d5dc; background: #fff; color: #6b6b72; display: inline-flex; align-items: center; justify-content: center; gap: 3px; cursor: pointer; padding: 0 8px; flex: none; }
+.ahheart:has(.hn) { width: auto; } .ahheart .ic { width: 16px; height: 16px; } .ahheart.on { color: #e11d48; background: #ffe4ea; border-color: #fecdd6; }
+.ahheart .hn { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ahseg { display: inline-flex; border: 1px solid #e5e0d8; border-radius: 99px; overflow: hidden; flex: none; }
+.ahseg button { border: 0; border-right: 1px solid #e5e0d8; background: #fff; font-size: 12.5px; padding: 6px 11px; color: #57534e; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; min-height: 32px; }
+.ahseg button:last-child { border-right: 0; } .ahseg button:hover { background: #fff1f4; }
+.ahseg button.on { background: #141416; color: #fff; font-weight: 700; } .ahseg button .ic { width: 12px; height: 12px; stroke-width: 2.8; }
+.ahct { position: relative; display: inline-flex; align-items: center; border: 1px solid #e5e0d8; border-radius: 99px; background: #fff; padding-left: 10px; flex: none; }
+.ahct i { width: 8px; height: 8px; border-radius: 50%; background: #d6d3d1; flex: none; }
+.ahct.ct0 i { background: #2563eb; } .ahct.ct1 i { background: #ea580c; } .ahct.ct2 i { background: #16a34a; } .ahct.ct3 i { background: #78716c; }
+.ahct select { -webkit-appearance: none; appearance: none; border: 0; background: transparent; font: inherit; font-size: 12.5px; padding: 7px 28px 7px 7px; cursor: pointer; color: #141416;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6b72' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") right 10px center / 12px no-repeat; }
+.ahct:hover { border-color: #e11d48; }
+@media screen and (max-width: 1300px) { .ahs { display: none; } }
+@media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) { .ahead { display: none; } .ablock { margin: 0; } }
+@media print { .ahead, .fchips, .fsum { display: none !important; } .ablock { margin: 0 !important; } }
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
@@ -1521,21 +1565,50 @@ function renderStat() {
   $('#stat').title = `숨김 ${hid}명 · 검토 필요 ${warn}명`;
 }
 
+// 지금 걸려 있는 검색·필터를 칩으로 (✕로 하나씩, '모두 해제')
+function filterChips(n) {
+  const c = [], q = norm($('#q').value), sf = $('#stageF').value, cf = $('#contactF').value;
+  if (q) c.push(['q', `검색: ${q}`]);
+  if (sf) c.push(['stage', sf === 'none' ? '심사 체크 없음' : `${sf} 체크`]);
+  if (cf) c.push(['contact', `연락: ${cf === 'none' ? '연락 전' : cf}`]);
+  if ($('#onlyWarn').checked) c.push(['warn', '검토 필요만']);
+  if ($('#showHidden').checked) c.push(['hidden', '숨김 포함']);
+  if (!c.length) return '';
+  return `<div class="fchips">${c.map(([k, t]) => `<button class="fchip" data-fclear="${k}" title="이 조건 풀기">${esc(t)}<i>${ic('x')}</i></button>`).join('')}${c.length > 1 ? '<button class="fclear" data-fclear="all">모두 해제</button>' : ''}</div>${n ? `<div class="fsum">조건에 맞는 지원자 ${n}명</div>` : ''}`;
+}
+function clearFilter(k) {
+  if (k === 'q' || k === 'all') $('#q').value = '';
+  if (k === 'stage' || k === 'all') $('#stageF').value = '';
+  if (k === 'contact' || k === 'all') $('#contactF').value = '';
+  if (k === 'warn' || k === 'all') $('#onlyWarn').checked = false;
+  if (k === 'hidden' || k === 'all') $('#showHidden').checked = false;
+  syncFilterMark(); render();
+}
+// 날짜 묶음 제목: 오늘·어제 표시, 토·일 색
+function dayHead(g) {
+  if (groupBy !== 'date' || !g.items[0] || !g.items[0].ts) return esc(g.label);
+  const d = g.items[0].ts, k = dayKey(d), t = new Date(), y = new Date(Date.now() - 864e5);
+  const tag = k === dayKey(t) ? '<span class="dtag">오늘</span>' : k === dayKey(y) ? '<span class="dtag y">어제</span>' : '';
+  return `<b class="${d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''}">${esc(g.label)}</b>${tag}`;
+}
+const bibTag = a => a.appNo != null ? `<span class="bibs">#${esc(String(a.appNo))}</span>` : '<span class="bibs none">번호 전</span>';
+const gradeChip = a => (a.gradeN || '').replace(' (2027 입학 예정)', ' (입학 예정)');
 function renderSide(gs) {
-  const side = $('#side');
-  if (!gs.length) { side.innerHTML = '<div class="note" style="padding:14px">조건에 맞는 지원자가 없습니다.</div>'; return; }
-  side.innerHTML = gs.map((g, gi) => `
-    <div class="group-h" data-gi="${gi}">${esc(g.label)} <span>${g.items.length}명</span></div>
+  const side = $('#side'), n = gs.reduce((s, g) => s + g.items.length, 0), chips = filterChips(n);
+  if (!gs.length) { side.innerHTML = chips + '<div class="note" style="padding:14px">조건에 맞는 지원자가 없습니다.</div>'; return; }
+  side.innerHTML = chips + gs.map((g, gi) => `
+    <div class="group-h" data-gi="${gi}"><span class="gl">${dayHead(g)}</span> <span>${g.items.length}명</span></div>
     ${g.items.map(a => `
       <div class="item ${a.key === selected ? 'sel' : ''} ${isHidden(a) ? 'hidden-row' : ''}" data-key="${esc(a.key)}" tabindex="0" role="button" aria-label="${esc(a.name)} 지원서 보기"${a.key === selected ? ' aria-current="true"' : ''}>
         <button class="more" data-more title="메뉴" aria-label="더 보기">${ic('more')}</button>
         <div class="thumb-col"><div class="thumb">${repImg(a)}</div>
           <button class="heart ${myLike(a) ? 'on' : ''}" data-heart ${heartTitle(a)}>${ic('heart', myLike(a) ? 'fill' : '')}${isAdmin() && heartN(a) ? `<span class="hn">${heartN(a)}</span>` : ''}</button></div>
-        <div style="min-width:0">
-          <div class="nm">${esc(a.name) || '(이름 없음)'}${isHidden(a) ? '<span class="badge hide">숨김</span>' : needsReview(a) ? '<span class="badge warn">검토</span>' : ''}${stageBadge(a)}</div>
-          <div class="sub">${[a.appNo != null ? '#' + a.appNo : '번호 없음', esc(sideSchool(a))].filter(Boolean).join(' · ')}</div>
-          <div class="sub">${[a.b ? String(a.b.y).slice(2) + '년생' : '', esc(a.dept) || '학과 미기재'].filter(Boolean).join(' · ')}</div>
+        <div style="min-width:0;flex:1">
+          <div class="nm">${bibTag(a)}${esc(a.name) || '(이름 없음)'}</div>
+          <div class="sub sch">${esc(sideSchool(a)) || '학교 미기재'}</div>
+          <div class="chips">${[gradeChip(a), a.dept || '학과 미기재', a.b ? String(a.b.y).slice(2) + '년생' : ''].filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join('')}</div>
           ${SUMMARY[a.row] ? `<div class="sum">${esc(SUMMARY[a.row])}</div>` : ''}
+          ${(() => { const b = (isHidden(a) ? '<span class="badge hide">숨김</span>' : needsReview(a) ? '<span class="badge warn">검토</span>' : '') + stageBadge(a); return b ? `<div class="srow">${b}</div>` : ''; })()}
         </div>
       </div>`).join('')}
   `).join('');
@@ -1703,7 +1776,7 @@ function paginate(secEl) {
     pg.innerHTML = `<div class="zoom-hint no-print" aria-hidden="true"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21M10.5 7.5v6M7.5 10.5h6"/></svg> 크게 보기</div>` + (pages.length === 0 ? `
       <div class="sheet-top">
         <div class="ttl">${titleHtml(SHEET_TITLE)}</div>
-        <div class="meta">지원번호 <b>${a.no}</b><br>접수 ${esc(fmtTs(a.ts) || a.timestamp)}<br>시트 ${a.row}행<span class="pg-dot"> · </span><span data-pg></span></div>
+        <div class="meta">${a.appNo != null ? `<span class="pbib">#${esc(String(a.appNo))}</span>` : '지원번호 <b>미부여</b>'}<br>접수 ${esc(fmtTs(a.ts) || a.timestamp)}<br>시트 ${a.row}행<span class="pg-dot"> · </span><span data-pg></span></div>
       </div><div class="body"></div>${contactRow(a)}<div class="foot">${a.no} · ${esc(a.name)} · <span data-pg></span></div>`
       : `<div class="body"></div><div class="foot">${a.no} · ${esc(a.name)} · <span data-pg></span></div>`);
     secEl.appendChild(pg); pages.push(pg);
@@ -1816,10 +1889,33 @@ document.addEventListener('pointerup', () => {
   if (moved) window.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); }, { capture: true, once: true });   // 끌고 난 뒤 링크가 열리지 않게
 });
 document.addEventListener('scroll', e => { const p = e.target; if (p.classList && p.classList.contains('deck')) deckPos[p.dataset.key] = p.scrollLeft; }, true);
+// 지원서 위 지원자 헤더 바: 읽으면서 바로 하트·심사·연락 상태를 바꿈 (지원서를 내리면 위에 붙어 있음)
+function aheadHtml(a) {
+  const s = signs[a.key] || {}, c = contacts[a.key] || '';
+  return `<div class="ahead no-print" data-key="${esc(a.key)}">
+    <div class="ahph">${repImg(a)}</div>
+    <div class="ahwho"><div class="ahn">${bibTag(a)}<b>${esc(a.name) || '(이름 없음)'}</b>${isHidden(a) ? '<span class="badge hide">숨김</span>' : ''}</div>
+      <div class="ahs">${[esc(sideSchool(a)), esc(gradeChip(a)), esc(a.dept)].filter(Boolean).join(' · ')}</div></div>
+    <span class="spacer"></span>
+    <button class="ahheart ${myLike(a) ? 'on' : ''}" data-ah="heart" ${heartTitle(a)}>${ic('heart', myLike(a) ? 'fill' : '')}${isAdmin() && heartN(a) ? `<span class="hn">${heartN(a)}</span>` : ''}</button>
+    <span class="ahseg" role="group" aria-label="심사 체크">${STAGES.map(t => `<button class="${s[t] ? 'on' : ''}" data-ah="sign" data-t="${t}" aria-pressed="${!!s[t]}">${s[t] ? ic('check') : ''}${t}</button>`).join('')}</span>
+    <label class="ahct ${c ? 'ct' + CONTACTS.indexOf(c) : ''}"><i></i><select data-ah="contact" aria-label="연락 상태">${['', ...CONTACTS].map(v => `<option value="${v}"${c === v ? ' selected' : ''}>${v || '연락 전'}</option>`).join('')}</select></label>
+  </div>`;
+}
+function refreshAhead(k) {
+  const hd = document.querySelector(`.ahead[data-key="${CSS.escape(k)}"]`), a = DATA && DATA.list.find(x => x.key === k);
+  if (hd && a) { hd.outerHTML = aheadHtml(a); fitCrops($('#main')); hydrateThumbs(); }
+}
+function setSign(k, t, on) {
+  const s = signs[k] = signs[k] || {};
+  if (on) s[t] = true; else delete s[t];
+  saveField(k, 'sign:' + t, on ? '1' : '');
+  rerender();
+}
 function renderMain(gs) {
   const main = $('#main');
   if (!gs.length) { main.innerHTML = '<div class="empty">조건에 맞는 지원자가 없습니다. 검색어나 필터를 확인하세요.</div>'; return; }
-  main.innerHTML = gs.map(g => `<div class="grp-title">${esc(g.label)} · ${g.items.length}명</div>${g.items.map(sheetHtml).join('')}`).join('');
+  main.innerHTML = gs.map(g => `<div class="grp-title">${esc(g.label)} · ${g.items.length}명</div>${g.items.map(a => `<div class="ablock" data-key="${esc(a.key)}">${aheadHtml(a)}${sheetHtml(a)}</div>`).join('')}`).join('');
   main.querySelectorAll('.pair').forEach(layoutPair);
   if (!isMobile()) main.querySelectorAll('.pair').forEach(setupDeck);
   fitCrops(main);
@@ -2204,6 +2300,7 @@ const syncFilterMark = () => $('#filters').classList.toggle('on', !!($('#stageF'
 $('#stageF').onchange = $('#contactF').onchange = () => { syncFilterMark(); render(); };
 $('#groupSel').onchange = e => { groupBy = e.target.value; store.set('groupBy', groupBy); render(); };
 $('#side').onclick = e => {
+  const fc = e.target.closest('[data-fclear]'); if (fc) { clearFilter(fc.dataset.fclear); return; }
   const hb = e.target.closest('[data-heart]');
   if (hb) { e.stopPropagation(); toggleHeart(hb.closest('.item').dataset.key); return; }
   const mo = e.target.closest('[data-more]');
@@ -2212,12 +2309,17 @@ $('#side').onclick = e => {
   if (it && isMobile()) { openMobile(it.dataset.key); return; }
   if (it) { selected = it.dataset.key; document.querySelectorAll('.item').forEach(x => x.classList.toggle('sel', x === it));
     const el = document.getElementById('s-' + selected);
-    if (el) { deckPos[selected] = 0; el.scrollTo({ left: 0, behavior: smoothB() }); el.scrollIntoView({ behavior: smoothB(), block: 'start' }); }   // 항상 1쪽부터
+    if (el) { deckPos[selected] = 0; el.scrollTo({ left: 0, behavior: smoothB() }); (el.closest('.ablock') || el).scrollIntoView({ behavior: smoothB(), block: 'start' }); }   // 항상 1쪽부터
     return; }
   const gh = e.target.closest('.group-h');
   if (gh) { const t = document.querySelectorAll('.grp-title')[+gh.dataset.gi]; if (t) t.scrollIntoView({ behavior: smoothB() }); }
 };
 $('#main').addEventListener('click', e => {
+  const ah = e.target.closest('[data-ah]');
+  if (ah && ah.dataset.ah !== 'contact') { const k = ah.closest('.ahead').dataset.key;
+    if (ah.dataset.ah === 'heart') { toggleHeart(k); } else setSign(k, ah.dataset.t, !(signs[k] || {})[ah.dataset.t]);
+    return; }
+  if (e.target.closest('.ahead')) return;
   const pf = e.target.closest('.file.photo a.fimg, .photo-cell .photo a');
   if (pf && !e.target.closest('button')) { e.preventDefault(); const sh = pf.closest('[data-key]'), img = pf.querySelector('img[data-thumb]'); if (img) openPhoto(sh.dataset.key, img.dataset.thumb); return; }
   const vf = e.target.closest('a[data-vid]');
@@ -2253,6 +2355,7 @@ function toggleHeart(k) {
   saveField(k, 'like:' + me, on ? '1' : '');
   const y = window.scrollY; renderSide(groups(visibleList())); hydrateThumbs(); window.scrollTo(0, y);
   if (document.body.classList.contains('m-detail')) markMobileCur();
+  refreshAhead(k);
 }
 // ===================== 휴대폰: 목록 ↔ 한 사람 지원서 =====================
 let mListY = 0;
@@ -2601,12 +2704,14 @@ function applyAct(key, act) {
   rerender();
 }
 $('#main').addEventListener('change', e => {
+  if (e.target.matches('[data-ah="contact"]')) { setContact(e.target.closest('.ahead').dataset.key, e.target.value); return; }
   if (!e.target.matches('[data-sign]')) return;
   const k = e.target.closest('.sheet').dataset.key, t = e.target.dataset.sign;
   const s = signs[k] = signs[k] || {};
   if (e.target.checked) s[t] = true; else delete s[t];
   saveField(k, 'sign:' + t, e.target.checked ? '1' : '');
   e.target.closest('label').classList.toggle('on', e.target.checked);
+  refreshAhead(k);
   renderStat(); renderSide(groups(visibleList())); hydrateThumbs();
 });
 $('#main').addEventListener('input', e => {
