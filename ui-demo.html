@@ -1,0 +1,125 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>외관 개선 예시</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+*{box-sizing:border-box} body{margin:0;background:#e8e5e0;font:14px/1.5 'Pretendard Variable',Pretendard,sans-serif;color:#141416;padding:24px}
+h1{font-size:21px;margin:0 0 4px} .lead{color:#6b6b72;margin:0 0 22px;font-size:13px}
+h2{font-size:16px;margin:30px 0 4px} .d{font-size:12.5px;color:#6b6b72;margin-bottom:12px}
+.row{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.col{width:340px} .colh{font-size:12px;font-weight:700;color:#6b645c;margin:0 0 6px 4px}
+.side{background:#efece7;border-radius:12px;padding:0 0 10px;overflow:hidden}
+.group-h{padding:12px 18px 6px;font-size:13px;font-weight:700;color:#57534e;display:flex;justify-content:space-between}
+.group-h span{font-weight:400;color:#6b645c}
+.item{margin:6px 10px;padding:10px;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06);display:flex;gap:12px;position:relative}
+.item.sel{box-shadow:0 0 0 2px #e11d48}
+.thumb-col{display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+.thumb{width:66px;height:88px;border-radius:8px;background:#d9d4cd;position:relative;overflow:hidden}
+.thumb svg.sil{position:absolute;inset:0;width:100%;height:100%}
+.heart{border:1px solid #f1d5dc;background:#fff;border-radius:99px;min-width:66px;min-height:26px;display:flex;align-items:center;justify-content:center;color:#6b6b72}
+.heart svg{width:14px;height:14px}
+.nm{font-size:15px;font-weight:800;line-height:1.35}
+.sub{font-size:12px;color:#6b6b72;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum{background:#f6f4f1;border-radius:7px;color:#57534e;font-size:11.5px;line-height:1.45;padding:4px 8px;margin-top:5px;height:calc(3*1.45em + 8px);overflow:hidden}
+.badge{display:inline-flex;align-items:center;gap:2px;font-size:11px;padding:1px 6px;border-radius:99px;margin-left:4px;vertical-align:1px;font-weight:600}
+.warn{background:#fff1e6;color:#c2410c} .ok{background:#e7f6ec;color:#15803d} .ct2{background:#e7f6ec;color:#15803d} .ct1{background:#fff1e6;color:#b45309}
+.more{position:absolute;top:8px;right:8px;color:#6b6b72}
+/* 새 카드 */
+.n .thumb{overflow:visible}
+.bib{position:absolute;left:-6px;top:-6px;background:#141416;color:#fff;font-weight:800;font-size:13px;letter-spacing:.3px;padding:2px 7px 2px 6px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.25);font-variant-numeric:tabular-nums}
+.bib.none{background:#fff;color:#a8a29e;border:1px dashed #cfc8bf;box-shadow:none;font-weight:600;font-size:11px}
+.thumb .photo{position:absolute;inset:0;border-radius:8px;overflow:hidden;background:#d9d4cd}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.chip{font-size:11.5px;padding:1px 7px;border-radius:6px;background:#f3f1ee;color:#57534e;white-space:nowrap}
+.n .sch{font-size:12.5px;color:#57534e;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.n .stat-row{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap} .n .stat-row .badge{margin-left:0}
+.n .sum{height:calc(2*1.45em + 8px)}
+/* 필터 칩 */
+.fchips{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px 2px;align-items:center}
+.fchip{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:#fff;border:1px solid #fecdd6;color:#be123c;border-radius:99px;padding:3px 6px 3px 10px;font-weight:600}
+.fchip i{width:16px;height:16px;border-radius:50%;background:#ffe4ea;display:inline-flex;align-items:center;justify-content:center;font-style:normal}
+.fchip i svg{width:10px;height:10px}
+.fclear{font-size:12px;color:#6b6b72;text-decoration:underline;margin-left:2px}
+.fsum{font-size:12px;color:#6b645c;padding:4px 14px 0}
+/* 날짜 헤더 */
+.today{color:#e11d48} .dow-sat{color:#2563eb} .dow-sun{color:#dc2626}
+.group-h span.tag{font-size:10.5px;font-weight:800;background:#e11d48;color:#fff;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+/* 지원자 헤더 바 */
+.stage{background:#e8e5e0;border-radius:12px;padding:0 20px 20px;position:relative;width:min(100%,880px)}
+.ahead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;background:#fff;border-radius:0 0 14px 14px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:10px 14px;margin:0 -8px 16px}
+.ahead .ph{width:38px;height:50px;border-radius:6px;background:#d9d4cd;position:relative;overflow:hidden;flex:none}
+.ahead .bib{position:static;font-size:15px;padding:3px 9px;border-radius:7px}
+.ahead .who{min-width:0} .ahead .who b{font-size:16px} .ahead .who div{font-size:12px;color:#6b6b72}
+.ahead .sp{flex:1}
+.seg{display:inline-flex;border:1px solid #e5e0d8;border-radius:99px;overflow:hidden}
+.seg span{font-size:12.5px;padding:5px 10px;border-right:1px solid #e5e0d8;color:#57534e;display:inline-flex;gap:3px;align-items:center}
+.seg span:last-child{border-right:0} .seg span.on{background:#141416;color:#fff;font-weight:700}
+.seg span.on svg{width:12px;height:12px}
+.hbtn{width:34px;height:34px;border-radius:50%;border:1px solid #f1d5dc;display:inline-flex;align-items:center;justify-content:center;color:#e11d48;background:#ffe4ea}
+.hbtn svg{width:16px;height:16px}
+.ctsel{font-size:12.5px;border:1px solid #e5e0d8;border-radius:99px;padding:5px 12px;background:#fff;display:inline-flex;align-items:center;gap:6px}
+.ctsel i{width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block}
+.paper{background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12);padding:28px 34px;height:300px;position:relative}
+.paper .t{font-weight:900;font-size:22px;letter-spacing:4px;border-bottom:3px double #333;padding-bottom:8px;display:flex;justify-content:space-between;align-items:flex-end}
+.paper .t .bib{position:static;font-size:16px;letter-spacing:.5px}
+.paper .ln{height:14px;background:#f1f1f1;margin:16px 0;border-radius:3px} .paper .ln.s{width:60%}
+svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.note2{font-size:12px;color:#6b645c;margin-top:8px}
+</style>
+<h1>외관 개선 예시</h1>
+<p class="lead">가짜 이름·회색 실루엣으로 만든 예시입니다(지원자 정보 없음). 왼쪽이 지금, 오른쪽이 바꾼 모습입니다.</p>
+
+<h2>1 · 번호표 배지 + 3 · 카드 정보 정리</h2>
+<div class="d">사진 왼쪽 위에 오디션 번호표. 학년·학과·출생연도는 칩으로, 검토·심사·연락 배지는 아래 한 줄로 모음. 요약은 2줄로 줄여 카드 높이는 비슷하게.</div>
+<div class="row">
+  <div class="col"><div class="colh">지금</div><div class="side" id="cur"></div></div>
+  <div class="col"><div class="colh">바꾼 모습</div><div class="side" id="neu"></div></div>
+</div>
+
+<h2>4 · 걸려 있는 필터를 칩으로</h2>
+<div class="d">목록 맨 위에 지금 걸린 조건이 보이고, ✕로 하나씩 풀거나 '모두 해제'.</div>
+<div class="row"><div class="col"><div class="side">
+  <div class="fchips"><span class="fchip">검색: 한림 <i>X</i></span><span class="fchip">1차 체크 <i>X</i></span><span class="fchip">연락: 부재 <i>X</i></span><a class="fclear">모두 해제</a></div>
+  <div class="fsum">조건에 맞는 지원자 3명</div>
+  <div id="flt"></div></div></div></div>
+
+<h2>2 · 지원서 위 지원자 헤더 바</h2>
+<div class="d">지원서를 읽는 동안 위에 붙어 있어서, 맨 아래까지 내려가지 않고도 하트·심사 체크·연락 상태를 바로 바꿈. 종이 안의 원래 칸은 인쇄용으로 그대로.</div>
+<div class="stage">
+  <div class="ahead">
+    <div class="ph" id="ahph"></div><span class="bib">#22</span>
+    <div class="who"><b>김지우</b><div>서울공연예고 · 고2 · 실용음악과</div></div>
+    <div class="sp"></div>
+    <span class="hbtn" id="hb"></span>
+    <span class="seg"><span class="on" id="s1">1차</span><span>2차</span><span>최종</span></span>
+    <span class="ctsel"><i></i>연락 완료 ▾</span>
+  </div>
+  <div class="paper"><div class="t"><span>지 원 서</span><span class="bib">#22</span></div><div class="ln"></div><div class="ln s"></div><div class="ln"></div><div class="ln s"></div><div class="ln"></div></div>
+  <div class="note2">헤더 바의 ▾는 누르면 연락 전·연락함·부재·연락 완료·고사 중에서 고르는 메뉴. 휴대폰에서는 지원서 아래 버튼 줄이 화면 아래쪽에 붙음.</div>
+</div>
+
+<h2>5 · 날짜 헤더</h2>
+<div class="d">오늘·어제 표시, 토·일 색 구분.</div>
+<div class="row"><div class="col"><div class="side">
+  <div class="group-h"><div>10월 29일 (목)<span class="tag">오늘</span></div><span>3명</span></div>
+  <div class="group-h"><div>10월 28일 (수)<span class="tag" style="background:#57534e">어제</span></div><span>5명</span></div>
+  <div class="group-h"><div class="dow-sun">10월 25일 (일)</div><span>4명</span></div>
+  <div class="group-h"><div class="dow-sat">10월 24일 (토)</div><span>2명</span></div>
+</div></div></div>
+
+<script>
+const I={heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',more:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',check:'<path d="M20 6 9 17l-5-5"/>',x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'};
+const ic=(n,f)=>`<svg class="ic" viewBox="0 0 24 24" ${f?'style="fill:currentColor"':''} width="1em" height="1em">${I[n]}</svg>`;
+const sil=c=>`<svg class="sil" viewBox="0 0 66 88"><rect width="66" height="88" fill="${c}"/><circle cx="33" cy="32" r="13" fill="#bdb6ad"/><path d="M8 88c2-20 12-30 25-30s23 10 25 30z" fill="#bdb6ad"/></svg>`;
+const P=[{n:'김지우',no:22,sch:'서울공연예술고등학교',y:'09',g:'고2',dep:'실용음악과',sum:'○○엔터 연습생 1년 · 보컬 레슨 2년 · 교내 가요제 대상 · 메인보컬 지망',b:['warn:검토'],st:'ok:1차',ct:'ct2:연락 완료',sel:1},
+ {n:'박서연',no:17,sch:'한림연예예술고등학교',y:'10',g:'고1',dep:'실용무용과',sum:'댄스 학원 3년 · 커버댄스 대회 입상 · 안무 창작 · 메인댄서',b:[],st:'ok:2차',ct:'ct1:부재'},
+ {n:'이하은',no:null,sch:'선화예술고등학교',y:'11',g:'중3(입학 예정)',dep:'무용과',sum:'한국무용 7년 · 콩쿠르 금상 · 오디션 경력 없음 · 비주얼',b:[],st:'',ct:''}];
+const badge=s=>{if(!s)return'';const [c,t]=s.split(':');return `<span class="badge ${c}">${c==='ok'||c==='ct2'?ic('check'):''}${t}</span>`};
+document.getElementById('cur').innerHTML='<div class="group-h">10월 29일 (목)<span>3명</span></div>'+P.map(a=>`<div class="item ${a.sel?'sel':''}"><span class="more">${ic('more')}</span><div class="thumb-col"><div class="thumb">${sil('#d9d4cd')}</div><span class="heart">${ic('heart')}</span></div><div style="min-width:0;flex:1"><div class="nm">${a.n}${a.b.map(badge).join('')}${badge(a.st)}${badge(a.ct)}</div><div class="sub">${a.no?'#'+a.no:'번호 없음'} · ${a.sch}</div><div class="sub">${a.y}년생 · ${a.dep}</div><div class="sum">${a.sum}</div></div></div>`).join('');
+document.getElementById('neu').innerHTML='<div class="group-h">10월 29일 (목)<span>3명</span></div>'+P.map(a=>`<div class="item n ${a.sel?'sel':''}"><span class="more">${ic('more')}</span><div class="thumb-col"><div class="thumb"><div class="photo">${sil('#d9d4cd')}</div><span class="bib ${a.no?'':'none'}">${a.no?'#'+a.no:'번호 전'}</span></div><span class="heart">${ic('heart')}</span></div><div style="min-width:0;flex:1"><div class="nm">${a.n}</div><div class="sch">${a.sch}</div><div class="chips"><span class="chip">${a.g}</span><span class="chip">${a.dep}</span><span class="chip">${a.y}년생</span></div><div class="sum">${a.sum}</div><div class="stat-row">${a.b.map(badge).join('')}${badge(a.st)}${badge(a.ct)}</div></div></div>`).join('');
+document.getElementById('flt').innerHTML=document.getElementById('neu').innerHTML.replace(/<div class="group-h">.*?<\/div>/,'');
+document.getElementById('ahph').innerHTML=sil('#d9d4cd');document.getElementById('hb').innerHTML=ic('heart',1);document.getElementById('s1').innerHTML=ic('check')+'1차';
+document.querySelectorAll('.fchip i').forEach(e=>e.innerHTML=ic('x'));
+</script>
