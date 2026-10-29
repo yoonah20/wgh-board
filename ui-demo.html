@@ -50,7 +50,7 @@ h2{font-size:16px;margin:30px 0 4px} .d{font-size:12.5px;color:#6b6b72;margin-bo
 .stage{background:#e8e5e0;border-radius:12px;padding:0 20px 20px;position:relative;width:min(100%,880px)}
 .ahead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;background:#fff;border-radius:0 0 14px 14px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:10px 14px;margin:0 -8px 16px}
 .ahead .ph{width:38px;height:50px;border-radius:6px;background:#d9d4cd;position:relative;overflow:hidden;flex:none}
-.ahead .bib{position:static;font-size:15px;padding:3px 9px;border-radius:7px}
+.ahead .bib{position:static;font-size:12px;padding:3px 7px;border-radius:5px}
 .ahead .who{min-width:0} .ahead .who b{font-size:16px} .ahead .who div{font-size:12px;color:#6b6b72}
 .ahead .sp{flex:1}
 .seg{display:inline-flex;border:1px solid #e5e0d8;border-radius:99px;overflow:hidden}
@@ -63,19 +63,27 @@ h2{font-size:16px;margin:30px 0 4px} .d{font-size:12.5px;color:#6b6b72;margin-bo
 .ctsel i{width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block}
 .paper{background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.12);padding:28px 34px;height:300px;position:relative}
 .paper .t{font-weight:900;font-size:22px;letter-spacing:4px;border-bottom:3px double #333;padding-bottom:8px;display:flex;justify-content:space-between;align-items:flex-end}
-.paper .t .bib{position:static;font-size:16px;letter-spacing:.5px}
+.paper .t .bib{position:static;font-size:13px;letter-spacing:.3px;padding:3px 7px;border-radius:5px;box-shadow:none}
 .paper .ln{height:14px;background:#f1f1f1;margin:16px 0;border-radius:3px} .paper .ln.s{width:60%}
 svg.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .note2{font-size:12px;color:#6b645c;margin-top:8px}
+
+.bibs{display:inline-block;background:#141416;color:#fff;font-weight:800;font-size:11px;line-height:1;padding:3px 5px;border-radius:4px;font-variant-numeric:tabular-nums;vertical-align:2px;margin-right:6px;letter-spacing:.2px}
+.bibs.none{background:#fff;color:#a8a29e;border:1px dashed #cfc8bf;font-weight:600}
+.v2 .thumb-col{justify-content:flex-start;gap:5px}
+.v2 .bibb{align-self:center;background:#141416;color:#fff;font-weight:800;font-size:11px;line-height:1;padding:3px 6px;border-radius:4px;font-variant-numeric:tabular-nums}
+.v2 .bibb.none{background:#fff;color:#a8a29e;border:1px dashed #cfc8bf;font-weight:600}
+.v2 .heart{margin-top:auto}
 </style>
 <h1>외관 개선 예시</h1>
 <p class="lead">가짜 이름·회색 실루엣으로 만든 예시입니다(지원자 정보 없음). 왼쪽이 지금, 오른쪽이 바꾼 모습입니다.</p>
 
 <h2>1 · 번호표 배지 + 3 · 카드 정보 정리</h2>
-<div class="d">사진 왼쪽 위에 오디션 번호표. 학년·학과·출생연도는 칩으로, 검토·심사·연락 배지는 아래 한 줄로 모음. 요약은 2줄로 줄여 카드 높이는 비슷하게.</div>
+<div class="d">학년·학과·출생연도는 칩으로, 검토·심사·연락 배지는 아래 한 줄로 모음. 번호표는 사진을 가리지 않게 작게 — <b>A: 이름 앞</b>, <b>B: 사진 바로 아래</b> 두 가지.</div>
 <div class="row">
   <div class="col"><div class="colh">지금</div><div class="side" id="cur"></div></div>
-  <div class="col"><div class="colh">바꾼 모습</div><div class="side" id="neu"></div></div>
+  <div class="col"><div class="colh">A · 이름 앞 번호표</div><div class="side" id="neu"></div></div>
+  <div class="col"><div class="colh">B · 사진 아래 번호표</div><div class="side" id="neu2"></div></div>
 </div>
 
 <h2>4 · 걸려 있는 필터를 칩으로</h2>
@@ -118,7 +126,8 @@ const P=[{n:'김지우',no:22,sch:'서울공연예술고등학교',y:'09',g:'고
  {n:'이하은',no:null,sch:'선화예술고등학교',y:'11',g:'중3(입학 예정)',dep:'무용과',sum:'한국무용 7년 · 콩쿠르 금상 · 오디션 경력 없음 · 비주얼',b:[],st:'',ct:''}];
 const badge=s=>{if(!s)return'';const [c,t]=s.split(':');return `<span class="badge ${c}">${c==='ok'||c==='ct2'?ic('check'):''}${t}</span>`};
 document.getElementById('cur').innerHTML='<div class="group-h">10월 29일 (목)<span>3명</span></div>'+P.map(a=>`<div class="item ${a.sel?'sel':''}"><span class="more">${ic('more')}</span><div class="thumb-col"><div class="thumb">${sil('#d9d4cd')}</div><span class="heart">${ic('heart')}</span></div><div style="min-width:0;flex:1"><div class="nm">${a.n}${a.b.map(badge).join('')}${badge(a.st)}${badge(a.ct)}</div><div class="sub">${a.no?'#'+a.no:'번호 없음'} · ${a.sch}</div><div class="sub">${a.y}년생 · ${a.dep}</div><div class="sum">${a.sum}</div></div></div>`).join('');
-document.getElementById('neu').innerHTML='<div class="group-h">10월 29일 (목)<span>3명</span></div>'+P.map(a=>`<div class="item n ${a.sel?'sel':''}"><span class="more">${ic('more')}</span><div class="thumb-col"><div class="thumb"><div class="photo">${sil('#d9d4cd')}</div><span class="bib ${a.no?'':'none'}">${a.no?'#'+a.no:'번호 전'}</span></div><span class="heart">${ic('heart')}</span></div><div style="min-width:0;flex:1"><div class="nm">${a.n}</div><div class="sch">${a.sch}</div><div class="chips"><span class="chip">${a.g}</span><span class="chip">${a.dep}</span><span class="chip">${a.y}년생</span></div><div class="sum">${a.sum}</div><div class="stat-row">${a.b.map(badge).join('')}${badge(a.st)}${badge(a.ct)}</div></div></div>`).join('');
+document.getElementById('neu').innerHTML='<div class="group-h">10월 29일 (목)<span>3명</span></div>'+P.map(a=>`<div class="item n ${a.sel?'sel':''}"><span class="more">${ic('more')}</span><div class="thumb-col"><div class="thumb"><div class="photo">${sil('#d9d4cd')}</div></div><span class="heart">${ic('heart')}</span></div><div style="min-width:0;flex:1"><div class="nm"><span class="bibs ${a.no?'':'none'}">${a.no?'#'+a.no:'번호 전'}</span>${a.n}</div><div class="sch">${a.sch}</div><div class="chips"><span class="chip">${a.g}</span><span class="chip">${a.dep}</span><span class="chip">${a.y}년생</span></div><div class="sum">${a.sum}</div><div class="stat-row">${a.b.map(badge).join('')}${badge(a.st)}${badge(a.ct)}</div></div></div>`).join('');
+document.getElementById('neu2').innerHTML='<div class="group-h">10월 29일 (목)<span>3명</span></div>'+P.map(a=>`<div class="item n v2 ${a.sel?'sel':''}"><span class="more">${ic('more')}</span><div class="thumb-col"><div class="thumb"><div class="photo">${sil('#d9d4cd')}</div></div><span class="bibb ${a.no?'':'none'}">${a.no?'#'+a.no:'번호 전'}</span><span class="heart">${ic('heart')}</span></div><div style="min-width:0;flex:1"><div class="nm">${a.n}</div><div class="sch">${a.sch}</div><div class="chips"><span class="chip">${a.g}</span><span class="chip">${a.dep}</span><span class="chip">${a.y}년생</span></div><div class="sum">${a.sum}</div><div class="stat-row">${a.b.map(badge).join('')}${badge(a.st)}${badge(a.ct)}</div></div></div>`).join('');
 document.getElementById('flt').innerHTML=document.getElementById('neu').innerHTML.replace(/<div class="group-h">.*?<\/div>/,'');
 document.getElementById('ahph').innerHTML=sil('#d9d4cd');document.getElementById('hb').innerHTML=ic('heart',1);document.getElementById('s1').innerHTML=ic('check')+'1차';
 document.querySelectorAll('.fchip i').forEach(e=>e.innerHTML=ic('x'));
