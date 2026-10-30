@@ -780,6 +780,21 @@ html .topbar .btn:hover, html .topbar #groupSel:hover, html .topbar #q:focus { b
 html .topbar #groupSel { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b645c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") !important; background-size: 12px !important; background-repeat: no-repeat !important; background-position: right 12px center !important; }
 .topbar :focus-visible, .mbar :focus-visible { outline-color: #e11d48 !important; }
 .thumbbar i { background: #e11d48; }
+/* 휴대폰: 누르는 버튼 44px 이상 */
+@media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) {
+  .heart { min-height: 40px !important; min-width: 72px !important; }
+  .more { min-width: 44px !important; min-height: 44px !important; top: 4px !important; right: 4px !important; }
+  .cbtn { min-height: 44px !important; }
+  .topbar .btn, .topbar #groupSel, .filters > summary, #q { min-height: 44px !important; height: 44px !important; }
+  .fchip { min-height: 36px; padding-top: 6px; padding-bottom: 6px; }
+  .mbar button { min-width: 44px; height: 44px; }
+  .sign label { min-height: 64px; }
+  .phnav { width: 44px !important; height: 64px !important; }
+  .review-btns .btn { min-height: 44px; }
+  .brow { min-height: 40px; }
+  .crop-btn { min-height: 40px !important; padding: 8px 12px !important; }
+  .rep-btn { padding: 12px 6px !important; margin: -12px -6px !important; }
+}
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
