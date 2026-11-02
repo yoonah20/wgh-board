@@ -810,6 +810,8 @@ html .topbar #groupSel { background-image: url("data:image/svg+xml;utf8,<svg xml
 .sheet, .pair.deck .sheet { box-shadow: 0 0 0 1px rgba(60,40,20,.08), 0 1px 2px rgba(60,40,20,.06), 0 10px 28px -6px rgba(60,40,20,.18) !important; border-radius: 2px; }
 @media print { .sheet, .pair.deck .sheet { box-shadow: none !important; border-radius: 0; } }
 @media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) { .thumb { width: 80px !important; height: 106px !important; } .heart { width: 60px !important; min-height: 36px !important; } }
+.pdftag { position: absolute; left: 4px; top: 4px; z-index: 2; background: #141416; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 4px; letter-spacing: .3px; }
+.photo-cell .photo .pdftag { left: 6px; top: 6px; }
 /* ===================== 통계 화면 ===================== */
 .stats { position: fixed; left: 0; right: 0; top: var(--tbh, 56px); bottom: 0; z-index: 39; background: #e8e5e0; overflow-y: auto; }
 .stats > .sbar, .stats > .sgrid { max-width: 1440px; margin-inline: auto; }
@@ -1287,6 +1289,12 @@ function paintThumb(im, u) {
   if (!im.dataset.trim) { im.src = u; return; }
   im.src = u; trimBars(u).then(t => { if (im.dataset.thumb && imgSrc(im.dataset.thumb) === u) im.src = t; });
 }
+// 사진 칸에 PDF를 올린 경우: 첫 쪽 미리보기를 보여주고, 누르면 PDF 전체를 화면 안에서 봄
+const PDFS = new Set(store.get('pdfIds', []));
+function markPdf(id) {
+  if (!PDFS.has(id)) { PDFS.add(id); store.set('pdfIds', [...PDFS]); }
+  document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(im => { const f = im.closest('.fimg, .photo'); if (f && !f.querySelector('.pdftag')) f.insertAdjacentHTML('beforeend', '<b class="pdftag">PDF</b>'); });
+}
 function showThumb(id, uri) {
   IMG[id] = uri; const u = imgSrc(id);
   document.querySelectorAll(`img[data-thumb="${id}"]`).forEach(im => paintThumb(im, u));
@@ -1314,6 +1322,7 @@ function pumpThumbs() {
   while (thumbBusy < 6 && thumbQueue.length) {
     const [id, res] = thumbQueue.shift(); thumbBusy++;
     call('getThumb', id, 800).then(d => {
+      if (d && /pdf/i.test(d.sourceMime || d.mimeType || '')) markPdf(id);
       if (d && d.content) { const uri = `data:${d.mimeType};base64,${d.content}`; showThumb(id, uri); idb.set('800:' + id, uri); }
       if (!IMG[id]) retryThumb(id);
       res(IMG[id] || null);
@@ -1993,6 +2002,7 @@ function renderMain(gs) {
   fitCrops(main);
   if (isMobile()) markMobileCur();
   applyHL(main);
+  PDFS.forEach(markPdf);
   main.querySelectorAll('img[data-trim]').forEach(im => { const id = im.dataset.thumb; if (IMG[id]) paintThumb(im, imgSrc(id)); });
 }
 
@@ -2393,6 +2403,7 @@ $('#main').addEventListener('click', e => {
     return; }
   if (e.target.closest('.ahead')) return;
   const pf = e.target.closest('.file.photo a.fimg, .photo-cell .photo a');
+  if (pf && !e.target.closest('button') && PDFS.has((pf.querySelector('img[data-thumb]') || {}).dataset?.thumb)) { e.preventDefault(); const id = pf.querySelector('img[data-thumb]').dataset.thumb; openVideo(id, 'PDF 사진', pf.closest('[data-key]').dataset.key); return; }
   if (pf && !e.target.closest('button')) { e.preventDefault(); const sh = pf.closest('[data-key]'), img = pf.querySelector('img[data-thumb]'); if (img) openPhoto(sh.dataset.key, img.dataset.thumb); return; }
   const vf = e.target.closest('a[data-vid]');
   if (vf) { e.preventDefault(); openVideo(vf.dataset.vid, vf.dataset.cap, vf.closest('[data-key]').dataset.key); return; }
