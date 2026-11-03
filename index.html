@@ -548,6 +548,7 @@ body::before { background: #141416 !important; }
 .badge.ct1 { background: #fff1e6; color: #b45309; }
 .badge.ct2 { background: #e7f6ec; color: #15803d; }
 .badge.ct3 { background: #eeeceb; color: #57534e; }
+.badge.ct4 { background: #f3effb; color: #6d28d9; }
 .badge.dup { background: #f3e8ff; color: #7e22ce; }
 .badge.hc { background: #ffe4ea; color: #be123c; }
 .vidbox { width: min(980px, 96vw); }
@@ -733,7 +734,7 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
 .ahseg button.on { background: #141416; color: #fff; font-weight: 700; } .ahseg button .ic { width: 12px; height: 12px; stroke-width: 2.8; }
 .ahct { position: relative; display: inline-flex; align-items: center; border: 1px solid #e5e0d8; border-radius: 99px; background: #fff; padding-left: 10px; flex: none; }
 .ahct i { width: 8px; height: 8px; border-radius: 50%; background: #d6d3d1; flex: none; }
-.ahct.ct0 i { background: #2563eb; } .ahct.ct1 i { background: #ea580c; } .ahct.ct2 i { background: #16a34a; } .ahct.ct3 i { background: #78716c; }
+.ahct.ct0 i { background: #2563eb; } .ahct.ct1 i { background: #ea580c; } .ahct.ct2 i { background: #16a34a; } .ahct.ct3 i { background: #78716c; } .ahct.ct4 i { background: #7c3aed; }
 .ahct select { -webkit-appearance: none; appearance: none; border: 0; background: transparent; font: inherit; font-size: 12.5px; padding: 7px 28px 7px 7px; cursor: pointer; color: #141416;
   background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6b72' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") right 10px center / 12px no-repeat; }
 .ahct:hover { border-color: #e11d48; }
@@ -912,7 +913,7 @@ body.stats-open { overflow: hidden; }
       <label class="chk"><input type="checkbox" id="showHidden"> 숨김 포함</label>
       <label class="chk"><input type="checkbox" id="onlyWarn"> 검토 필요만</label>
       <label class="chk fsel">심사 <select id="stageF"><option value="">전체</option><option value="1차">1차 체크</option><option value="2차">2차 체크</option><option value="최종">최종 체크</option><option value="none">체크 없음</option></select></label>
-      <label class="chk fsel">연락 <select id="contactF"><option value="">전체</option><option value="none">연락 전</option><option value="연락함">연락함</option><option value="부재">부재</option><option value="연락 완료">연락 완료</option><option value="고사">고사</option></select></label>
+      <label class="chk fsel">연락 <select id="contactF"><option value="">전체</option><option value="none">연락 전</option><option value="연락함">연락함</option><option value="연락 보류">연락 보류</option><option value="부재">부재</option><option value="고사">고사</option></select></label>
     </div>
   </details>
   <button class="btn" id="adminBtn" hidden title="관리자 메뉴">관리자</button>
@@ -1053,10 +1054,11 @@ let repPhoto = store.get('repPhoto', {});     // key -> 대표 사진 드라이�
 let rots = store.get('rots', {});            // key -> { 사진 id: 90|180|270 } 사진 회전
 let likes = store.get('likes', {});          // key -> { 이메일: true } 하트 누른 사람들
 let hls = store.get('hls', {});               // key -> [{f, s, e, c}] 내 형광펜 (나만 보임)
-let contacts = store.get('contacts', {});     // key -> '연락함' | '부재' | '연락 완료' | '고사' (없으면 연락 전)
+let contacts = store.get('contacts', {});     // key -> '연락함' | '연락 보류' | '부재' | '연락 완료' | '고사' (없으면 연락 전)
 let crops = store.get('crops', {});           // key -> { id, cx, cy, w, ar } 대표 사진 3:4 자르기 (이미지 비율 기준)
 const STAGES = ['1차', '2차', '최종'];
-const CONTACTS = ['연락함', '부재', '연락 완료', '고사'];
+const CONTACTS = ['연락함', '연락 보류', '부재', '고사'];
+const ctCls = c => 'ct' + ['연락함', '부재', '연락 완료', '고사', '연락 보류'].indexOf(c);   // 색 클래스는 값에 고정 (순서 바뀌어도 색 유지)
 
 // ===================== 심사 기록 공유 (Apps Script 웹 앱) =====================
 // 배포본에만 window.WGH_SYNC = { url, token }을 넣음. 없으면 이 브라우저에만 저장.
@@ -1709,7 +1711,7 @@ const heartTitle = a => { const who = Object.keys(likes[a.key] || {}); return is
 function stageBadge(a) {
   const s = signs[a.key] || {}; const last = [...STAGES].reverse().find(t => s[t]);
   const c = contacts[a.key];
-  return (last ? `<span class="badge ok">${ic('check')}${last}</span>` : '') + (c ? `<span class="badge ct ct${CONTACTS.indexOf(c)}">${c === '연락 완료' ? ic('check') : c === '부재' ? ic('alert') : c === '고사' ? ic('x') : ''}${c}</span>` : '');
+  return (last ? `<span class="badge ok">${ic('check')}${last}</span>` : '') + (c ? `<span class="badge ct ${ctCls(c)}">${c === '연락 완료' ? ic('check') : c === '부재' ? ic('alert') : c === '고사' ? ic('x') : ''}${c}</span>` : '');
 }
 // 사이드바 ⋯ 메뉴 항목
 function menuItems(a) {
@@ -1980,7 +1982,7 @@ function aheadHtml(a) {
     <span class="spacer"></span>
     <button class="ahheart ${myLike(a) ? 'on' : ''}" data-ah="heart" ${heartTitle(a)}>${ic('heart', myLike(a) ? 'fill' : '')}${isAdmin() && heartN(a) ? `<span class="hn">${heartN(a)}</span>` : ''}</button>
     <span class="ahseg" role="group" aria-label="심사 체크">${STAGES.map(t => `<button class="${s[t] ? 'on' : ''}" data-ah="sign" data-t="${t}" aria-pressed="${!!s[t]}">${s[t] ? ic('check') : ''}${t}</button>`).join('')}</span>
-    <label class="ahct ${c ? 'ct' + CONTACTS.indexOf(c) : ''}"><i></i><select data-ah="contact" aria-label="연락 상태">${['', ...CONTACTS].map(v => `<option value="${v}"${c === v ? ' selected' : ''}>${v || '연락 전'}</option>`).join('')}</select></label>
+    <label class="ahct ${c ? ctCls(c) : ''}"><i></i><select data-ah="contact" aria-label="연락 상태">${['', ...CONTACTS].map(v => `<option value="${v}"${c === v ? ' selected' : ''}>${v || '연락 전'}</option>`).join('')}</select></label>
   </div>`;
 }
 function refreshAhead(k) {
