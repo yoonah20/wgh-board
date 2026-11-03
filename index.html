@@ -702,7 +702,16 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
 .item .sub.sch { font-size: 12.5px; color: #57534e; }
 .item .chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
 .item .chip { font-size: 11.5px; padding: 1px 7px; border-radius: 6px; background: #f3f1ee; color: #57534e; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.item .srow { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; } .item .srow .badge { margin-left: 0; }
+/* 이름 줄: 이름(길면 …) + 검토·숨김·심사 표시 */
+.item .nmrow { display: flex; align-items: center; gap: 5px; padding-right: 26px; min-width: 0; }
+.item .nmrow .nm { min-width: 0; padding-right: 0 !important; } .item .nmrow .badge { flex: none; margin-left: 0; font-size: 11px; }
+/* 연락 상태: 카드 왼쪽 색 줄 + 학교 줄 오른쪽 글자 */
+.item.ct0 { --ctc: #2563eb; --ctt: #1d4f91; } .item.ct1 { --ctc: #ea580c; --ctt: #b45309; } .item.ct2 { --ctc: #16a34a; --ctt: #15803d; }
+.item.ct3 { --ctc: #78716c; --ctt: #57534e; } .item.ct4 { --ctc: #7c3aed; --ctt: #6d28d9; }
+.item.hasct { overflow: hidden; } .item.hasct::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ctc); }
+.item .schrow { display: flex; align-items: baseline; gap: 8px; min-width: 0; } .item .schrow .sch { min-width: 0; flex: 1; }
+.item .ctx { flex: none; font-size: 11.5px; font-weight: 700; color: var(--ctt); white-space: nowrap; }
+.item .ctx i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ctc); margin-right: 4px; vertical-align: 1px; }
 .item .nm { padding-right: 26px; }
 .fchips { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 12px 2px; align-items: center; }
 .fchip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; background: #fff; border: 1px solid #fecdd6; color: #be123c; border-radius: 99px; padding: 3px 5px 3px 10px; font-weight: 600; cursor: pointer; min-height: 26px; }
@@ -1682,16 +1691,15 @@ function renderSide(gs) {
   side.innerHTML = chips + gs.map((g, gi) => `
     <div class="group-h" data-gi="${gi}"><span class="gl">${dayHead(g)}</span> <span>${g.items.length}명</span></div>
     ${g.items.map(a => `
-      <div class="item ${a.key === selected ? 'sel' : ''} ${isHidden(a) ? 'hidden-row' : ''}" data-key="${esc(a.key)}" tabindex="0" role="button" aria-label="${esc(a.name)} 지원서 보기"${a.key === selected ? ' aria-current="true"' : ''}>
+      <div class="item ${a.key === selected ? 'sel' : ''} ${isHidden(a) ? 'hidden-row' : ''} ${contacts[a.key] ? 'hasct ' + ctCls(contacts[a.key]) : ''}" data-key="${esc(a.key)}" tabindex="0" role="button" aria-label="${esc(a.name)} 지원서 보기"${a.key === selected ? ' aria-current="true"' : ''}>
         <button class="more" data-more title="메뉴" aria-label="더 보기">${ic('more')}</button>
         <div class="thumb-col"><div class="thumb">${repImg(a) || `<div class="ini">${esc((norm(a.name).match(/[가-힣A-Za-z]/) || ['?'])[0].toUpperCase())}<small>사진 없음</small></div>`}</div>
           <button class="heart ${myLike(a) ? 'on' : ''}" data-heart ${heartTitle(a)}>${ic('heart', myLike(a) ? 'fill' : '')}${isAdmin() && heartN(a) ? `<span class="hn">${heartN(a)}</span>` : ''}</button></div>
         <div style="min-width:0;flex:1">
-          <div class="nm">${bibTag(a)}${esc(a.name) || '(이름 없음)'}</div>
-          <div class="sub sch">${esc(sideSchool(a)) || '학교 미기재'}</div>
+          <div class="nmrow"><div class="nm">${bibTag(a)}${esc(a.name) || '(이름 없음)'}</div>${isHidden(a) ? '<span class="badge hide">숨김</span>' : needsReview(a) ? '<span class="badge warn">검토</span>' : ''}${stageBadge(a)}</div>
+          <div class="schrow"><div class="sub sch">${esc(sideSchool(a)) || '학교 미기재'}</div>${contacts[a.key] ? `<span class="ctx"><i></i>${esc(contacts[a.key])}</span>` : ''}</div>
           <div class="chips">${[gradeChip(a), a.dept || '학과 미기재', a.b ? String(a.b.y).slice(2) + '년생' : ''].filter(Boolean).map(t => `<span class="chip">${esc(t)}</span>`).join('')}</div>
           ${SUMMARY[a.row] ? `<div class="sum">${esc(SUMMARY[a.row])}</div>` : ''}
-          ${(() => { const b = (isHidden(a) ? '<span class="badge hide">숨김</span>' : needsReview(a) ? '<span class="badge warn">검토</span>' : '') + stageBadge(a); return b ? `<div class="srow">${b}</div>` : ''; })()}
         </div>
       </div>`).join('')}
   `).join('');
@@ -1711,7 +1719,7 @@ const heartTitle = a => { const who = Object.keys(likes[a.key] || {}); return is
 function stageBadge(a) {
   const s = signs[a.key] || {}; const last = [...STAGES].reverse().find(t => s[t]);
   const c = contacts[a.key];
-  return (last ? `<span class="badge ok">${ic('check')}${last}</span>` : '') + (c ? `<span class="badge ct ${ctCls(c)}">${c === '연락 완료' ? ic('check') : c === '부재' ? ic('alert') : c === '고사' ? ic('x') : ''}${c}</span>` : '');
+  return last ? `<span class="badge ok">${ic('check')}${last}</span>` : '';
 }
 // 사이드바 ⋯ 메뉴 항목
 function menuItems(a) {
