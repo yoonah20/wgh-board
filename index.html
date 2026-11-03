@@ -1323,7 +1323,7 @@ function pumpThumbs() {
     const [id, res] = thumbQueue.shift(); thumbBusy++;
     call('getThumb', id, 800).then(d => {
       if (d && /pdf/i.test(d.sourceMime || d.mimeType || '')) markPdf(id);
-      if (d && d.content) { const uri = `data:${d.mimeType};base64,${d.content}`; showThumb(id, uri); idb.set('800:' + id, uri); }
+      if (d && d.content) { const uri = `data:${d.mimeType};base64,${d.content}`; showThumb(id, uri); if (!d.small) idb.set('800:' + id, uri); }   // 작은 대체 썸네일은 저장 안 함 → 다음에 큰 걸로 다시 받음
       if (!IMG[id]) retryThumb(id);
       res(IMG[id] || null);
     }).catch(() => { retryThumb(id); res(null); }).finally(() => { thumbBusy--; pumpThumbs(); });
