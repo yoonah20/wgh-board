@@ -1495,8 +1495,8 @@ function buildApplicants(rows) {
 // '대한민국, 미국'처럼 여러 개면 하나라도 한국이면 한국 국적(복수국적)으로 봄. '한국계 미국인'은 외국 국적.
 function natInfo(s) {
   if (!s || isBlank(s)) return { foreign: false, dual: false };
-  const parts = norm(s).split(/[,/;·&]|\s및\s|\s그리고\s/).map(compact).filter(Boolean);
-  const kr = parts.filter(p => RULES.koreanNationality.includes(p));
+  const parts = norm(s).split(/[,/;·&+]|\s및\s|\s그리고\s/).map(p => compact(p).replace(/(이중|복수|이중국|복수국)?국적(자|입니다|임)?$|시민권(자)?$|\(.*\)$/g, '')).filter(Boolean);   // '한국 이중국적' → '한국'
+  const kr = parts.filter(p => RULES.koreanNationality.includes(p) || /^(대한민국|한국(?!계)(?!.*(비자|visa))|korea(?!n?american))/.test(p));   // '대한민국(호주 영주권자)', '한국 이중국적'도 한국 국적
   return { foreign: !kr.length, dual: kr.length > 0 && parts.length > kr.length };
 }
 function classify(list, headers, map) {
@@ -1516,14 +1516,12 @@ function classify(list, headers, map) {
   });
   list.forEach(a => {
     a.hideReasons = []; a.warnReasons = [];
-    // 자동 숨김: 외국 국적은 국내 학교 재학 + 대상 연령일 때만 표시
+    // 자동 숨김: 외국 국적은 국내 학교 재학일 때만 표시 (나이 제한 없음)
     const nat = natInfo(a.nationality);
     if (nat.foreign) {
       const sch = norm(a.school);
       const krSchool = RULES.koreanSchool.test(sch) && !RULES.notKoreanSchool.test(sch);
-      const inAge = !a.b || (a.b.y >= RULES.birthYearMin && a.b.y <= RULES.birthYearMax);
       if (!krSchool) a.hideReasons.push(`외국 국적 (${a.nationality}) · 국내 학교 아님`);
-      else if (!inAge) a.hideReasons.push(`외국 국적 (${a.nationality}) · 대상 연령 아님`);
       else a.warnReasons.push(`외국 국적 (${a.nationality}) · 국내 학교 재학이라 표시`);
     } else if (nat.dual) a.warnReasons.push(`복수국적 (${a.nationality})`);
     if (RULES.foreignAddress.test(a.address || '')) a.warnReasons.push(`해외 주소 (${a.address})`);
@@ -1537,7 +1535,6 @@ function classify(list, headers, map) {
     const expectY = { '중3 (2027 입학 예정)': 2011, '고1': 2010, '고2': 2009, '고3': 2008 }[a.gradeN];
     if (a.b && expectY && a.b.y !== expectY && a.b.y >= RULES.birthYearMin && a.b.y <= RULES.birthYearMax)
       a.warnReasons.push(`학년(${a.gradeN})과 출생연도(${a.b.y}) 불일치`);
-    if (a.b && (a.b.y < RULES.birthYearMin || a.b.y > RULES.birthYearMax)) a.warnReasons.push(`출생연도 ${a.b.y} (대상 범위 밖)`);
     if (!a.b) a.warnReasons.push('생년월일 확인 불가');
     if (!a.nationality) a.warnReasons.push('국적 미기재');
     if (!a.files.length) a.warnReasons.push('첨부파일 없음');
