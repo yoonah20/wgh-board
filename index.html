@@ -1003,13 +1003,13 @@ window.addEventListener('error', e => {
 
 // ===================== 설정 =====================
 // 지원 자격: 한국 국적 여학생. 출생연도 범위는 '중3(진학 예정) ~ 고3' 기준.
-// 외국 국적이라도 국내 중·고등학교 재학이면 표시하고, 외국 학교(홈스쿨·대학·어학원 포함)면 숨김.
+// 숨김 기준: 국내 중·고등학교 재학(또는 국내 고교 진학 예정)이 아니면 숨김. 국적·나이는 보지 않음 (외국 학교·홈스쿨·대학·어학원은 숨김).
 const RULES = {
   koreanNationality: ['대한민국', '한국', '한국인', '내국인', 'korea', 'southkorea', 'republicofkorea', 'kr', 'kor', '대한민국korea', '한국korea'],
   birthYearMin: 2008,
   birthYearMax: 2011,
   koreanSchool: /고등학교|고등헉교|고교|예술고|예고|중학교|여중|여고|[가-힣]고$|[가-힣]중$/,
-  notKoreanSchool: /대학|어학원|홈스쿨|자택|international|국제학교|외국인학교|[a-z]{3,}/i,
+  notKoreanSchool: /대학|어학원|홈스쿨|자택|international|국제학교|외국인학교|^[^가-힣]*$/i,   // 한글 없는 학교 이름(해외 학교)도 국내 학교 아님. '한국K-POP고등학교'는 국내
   foreignAddress: /도쿄|일본|오사카|중국|대만|미국|인도|tokyo|japan|india|usa|china|taipei|australia|italy|brazil|portugal|lithuania/i,
 };
 
@@ -1516,14 +1516,9 @@ function classify(list, headers, map) {
   });
   list.forEach(a => {
     a.hideReasons = []; a.warnReasons = [];
-    // 자동 숨김: 외국 국적은 국내 학교 재학일 때만 표시 (나이 제한 없음)
-    const nat = natInfo(a.nationality);
-    if (nat.foreign) {
-      const sch = norm(a.school);
-      const krSchool = RULES.koreanSchool.test(sch) && !RULES.notKoreanSchool.test(sch);
-      if (!krSchool) a.hideReasons.push(`외국 국적 (${a.nationality}) · 국내 학교 아님`);
-      else a.warnReasons.push(`외국 국적 (${a.nationality}) · 국내 학교 재학이라 표시`);
-    } else if (nat.dual) a.warnReasons.push(`복수국적 (${a.nationality})`);
+    // 자동 숨김: 국내 학교에 재학 중(또는 2027 진학 예정)이면 표시 — 국적·나이는 따지지 않음
+    const krSchool = s => { s = norm(s); return RULES.koreanSchool.test(s) && !RULES.notKoreanSchool.test(s); };
+    if (!krSchool(a.school) && !krSchool(a.nextSchool)) a.hideReasons.push(`국내 학교 재학 아님 (${norm(a.school) || '학교 미기재'})`);
     if (RULES.foreignAddress.test(a.address || '')) a.warnReasons.push(`해외 주소 (${a.address})`);
     if (a.gender && /남|male|^m$|boy/i.test(a.gender) && !/여|female/i.test(a.gender))
       a.hideReasons.push(`남성 (${a.gender})`);
@@ -1536,7 +1531,6 @@ function classify(list, headers, map) {
     if (a.b && expectY && a.b.y !== expectY && a.b.y >= RULES.birthYearMin && a.b.y <= RULES.birthYearMax)
       a.warnReasons.push(`학년(${a.gradeN})과 출생연도(${a.b.y}) 불일치`);
     if (!a.b) a.warnReasons.push('생년월일 확인 불가');
-    if (!a.nationality) a.warnReasons.push('국적 미기재');
     if (!a.files.length) a.warnReasons.push('첨부파일 없음');
     if (a.skippedNo) a.warnReasons.push('스태프가 번호를 비워 둔 행 (중복·제외 추정)');
   });
