@@ -2833,12 +2833,12 @@ function renderGal() {
   const y = ov.scrollTop;
   const all = gs.flatMap(g => g.items);   // 묶음 없이 한 판에 (순서는 지금 정렬 그대로)
   ov.querySelector('.gbody').innerHTML = n ? `
-    <div class="ggrid">${all.map(a => { const np = a.files.filter(f => f.kind === 'photo').length; return `
+    <div class="ggrid">${all.map(a => `
       <button class="gcard ${isHidden(a) ? 'hidden-row' : ''}" data-gkey="${esc(a.key)}" aria-label="${esc(a.name)} 지원서 보기">
         <div class="gph">${repImg(a) || `<div class="ini">${esc((norm(a.name).match(/[가-힣A-Za-z]/) || ['?'])[0].toUpperCase())}<small>사진 없음</small></div>`}
           <span class="gb">${a.appNo != null ? '#' + esc(String(a.appNo)) : '번호 전'}</span>${myLike(a) ? `<span class="gh">${ic('heart', 'fill')}</span>` : ''}
-          <div class="gtx"><div class="gnm">${esc(a.name) || '(이름 없음)'}</div><div class="gsc">${esc(sideSchool(a)) || '학교 미기재'}</div><div class="gsc">${esc([gradeChip(a), a.dept, a.b ? String(a.b.y).slice(2) + '년생' : '', np > 1 ? `사진 ${np}장` : ''].filter(Boolean).join(' · '))}</div></div></div>
-      </button>`; }).join('')}</div>` : '<div class="note" style="padding:20px">조건에 맞는 지원자가 없습니다.</div>';
+          <div class="gtx"><div class="gnm">${esc(a.name) || '(이름 없음)'}</div><div class="gsc">${esc(sideSchool(a)) || '학교 미기재'}</div><div class="gsc">${esc([gradeChip(a), a.dept, a.b ? String(a.b.y).slice(2) + '년생' : ''].filter(Boolean).join(' · '))}</div></div></div>
+      </button>`).join('')}</div>` : '<div class="note" style="padding:20px">조건에 맞는 지원자가 없습니다.</div>';
   ov.scrollTop = y;
   hydrateThumbs(); requestAnimationFrame(() => fitCrops(ov));
 }
