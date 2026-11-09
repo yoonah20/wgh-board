@@ -752,6 +752,26 @@ body.m-detail .thumbbar { top: calc(52px + env(safe-area-inset-top, 0px)); }
 @media print { .ahead, .fchips, .fsum { display: none !important; } .ablock { margin: 0 !important; } }
 /* ===== 통계 2차: 빈칸 없는 배치 · 차분한 막대 · 일별 그래프 ===== */
 .stats .scols { columns: 4 300px; column-gap: 14px; padding-top: 14px; }
+/* 통계: 섹션별로 줄 맞춤 */
+.stats .ssec { margin: 26px 2px 10px; font-size: 13px; font-weight: 800; color: var(--ink-2); letter-spacing: .3px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.stats .ssec span { font-weight: 500; font-size: 12px; letter-spacing: 0; }
+.stats .srow { display: grid; gap: 14px; align-items: stretch; }
+.stats .srow.r2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stats .srow.r3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stats .srow.r21 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.stats .school2 { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 24px; align-items: start; }
+.stats .school2 .dleg { display: none; }   /* 원그래프 색은 목록 앞 점으로 대신 — 중복 목록 없앰 */
+.stats .bmore summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); padding: 6px 4px 2px; list-style: none; }
+.stats .bmore summary::-webkit-details-marker { display: none; }
+.stats .bmore summary::before { content: '＋ '; } .stats .bmore[open] summary::before { content: '－ '; }
+.stats .bmore[open] summary { margin-bottom: 2px; }
+.stats .sdaily .cap { margin-bottom: 6px; }
+@media screen and (max-width: 1100px) { .stats .srow.r21 { grid-template-columns: minmax(0, 1fr); } .stats .srow.r3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) {
+  .stats .srow.r2, .stats .srow.r3 { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .stats .school2 { grid-template-columns: minmax(0, 1fr); justify-items: center; } .stats .school2 .donut svg { width: 140px; height: 140px; } .stats .school2 > div:last-child { width: 100%; }
+  .stats .ssec { margin-top: 20px; }
+}
 .stats .scols > .card { break-inside: avoid; display: block; width: 100%; margin: 0 0 14px; }
 .stats .sdaily { margin-top: 0; }
 .stats .card h3 + .cap { margin-bottom: 10px; }
@@ -2736,12 +2756,16 @@ const countBy = (list, f) => { const m = new Map(); list.forEach(a => { const k 
 const topN = (arr, n, unit = '개') => arr.length <= n ? arr : [...arr.slice(0, n), [`그 외 ${arr.length - n}${unit}`, arr.slice(n).reduce((s, x) => s + x[1], 0)]];
 function barList(rows, total, opts = {}) {
   if (!rows.length) return '<div class="note">해당 없음</div>';
-  const max = Math.max(1, ...rows.map(r => r[1]));
+  if (opts.max && rows.length > opts.max + 1) {   // 많으면 앞쪽만 보이고 나머지는 접어 둠
+    const { max: m, ...o } = opts, mx = Math.max(1, ...rows.map(r => r[1]));
+    return barList(rows.slice(0, m), total, { ...o, scale: mx }) + `<details class="bmore"><summary>나머지 ${rows.length - m}개 더 보기</summary>${barList(rows.slice(m), total, { ...o, scale: mx })}</details>`;
+  }
+  const max = opts.scale || Math.max(1, ...rows.map(r => r[1]));
   return `<div class="blist ${opts.long ? 'long' : ''}">${rows.map(([k, n]) => {
     const pct = total ? Math.round(n / total * 100) : 0;
     const q = opts.click && !/^그 외/.test(k) ? opts.click(k) : '';
     return `<div class="brow ${q ? 'click' : ''} ${n ? '' : 'zero'}" ${q ? `data-q="${esc(q)}"` : ''} title="${esc(k)} · ${n}명 (${pct}%)${q ? ' — 누르면 목록에서 보기' : ''}">
-      <span class="bl">${esc(k)}</span><span class="bt"><span class="bf" style="width:${(n / max * 100).toFixed(1)}%;display:block${n ? '' : ';min-width:0'}"></span></span><span class="bn">${n}${opts.noPct ? '' : `<small>${pct}%</small>`}</span></div>`;
+      <span class="bl">${esc(k)}</span><span class="bt"><span class="bf" style="width:${(n / max * 100).toFixed(1)}%;display:block${n ? '' : ';min-width:0'}${opts.colors && opts.colors[k] ? ';background:' + opts.colors[k] + ' !important' : ''}"></span></span><span class="bn">${n}${opts.noPct ? '' : `<small>${pct}%</small>`}</span></div>`;
   }).join('')}</div>`;
 }
 function dailyCols(list) {
@@ -2802,28 +2826,43 @@ function renderStats() {
   const wbTop = o => Object.entries(o).sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0], 'ko'));
   const wbNone = wb.filter(w => !w.groups.size && !w.people.size).length;
   const stageV = Object.fromEntries(STAGES.map(t => [t + ' 체크', t])), contactV = { '연락 전': 'none', ...Object.fromEntries(CONTACTS.map(c => [c, c])) };
+  const stage1 = valid.filter(a => (signs[a.key] || {})[STAGES[0]]).length, contacted = valid.filter(a => contacts[a.key]).length;
   ov.querySelector('.sbody').innerHTML = `
     <div class="tiles">
-      <div class="tile"><div class="k">지원자 (숨김 제외)</div><div class="v">${N}<small>명</small></div><div class="d">숨김 ${hidN}명 제외</div></div>
+      <div class="tile"><div class="k">지원자</div><div class="v">${N}<small>명</small></div><div class="d">숨김 ${hidN}명 제외</div></div>
       <div class="tile"><div class="k">오늘 / 최근 7일</div><div class="v">${todayN}<small>명</small> <small>/ ${weekN}명</small></div><div class="d">접수 시각 기준</div></div>
-      <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">국내 지원자 기준</div></div>
-      <div class="tile"><div class="k">지원 학교</div><div class="v">${schools.filter(r => !/미기재/.test(r[0])).length}<small>곳</small></div><div class="d">국내 재학생의 재학 학교</div></div>
+      <div class="tile"><div class="k">재학생 / 입학 예정(중3)</div><div class="v">${enrolled.length}<small>명</small> <small>/ ${incoming.length}명</small></div><div class="d">지원 학교 ${schools.filter(r => !/미기재/.test(r[0])).length}곳</div></div>
+      <div class="tile"><div class="k">${esc(STAGES[0])} 체크 / 연락</div><div class="v">${stage1}<small>명</small> <small>/ ${contacted}명</small></div><div class="d">연락 = 연락 전이 아닌 사람</div></div>
     </div>
-    <div class="scols">
-      <div class="card a-donut"><h3>학교 비중</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 상위 6곳</div>${donut(schools, enrolled.length)}</div>
-      <div class="card a-next"><h3>입학 예정자(중3)의 진학 예정 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ })}</div>
-      <div class="card a-list"><h3>학교별 지원자</h3><div class="cap">국내 재학생 ${enrolled.length}명 · 많은 순 · 누르면 목록에서 보기</div>${barList(schools, enrolled.length, { long: true, click: schoolQ })}</div>
-      <div class="card a-age"><h3>학년</h3><div class="cap">전체 ${N}명</div>${barList(grades, N)}
-        <h3 style="margin-top:22px">출생연도</h3><div class="cap">전체 ${N}명</div>${barList(years, N)}</div>
-      <div class="card a-stage"><h3>심사 진행</h3><div class="cap">전체 ${N}명 · 누르면 그 사람들만 목록에서 보기</div>${barList(stageRows, N, { click: fq('stage', stageV) })}
-        <h3 style="margin-top:22px">연락 상태</h3><div class="cap">전체 ${N}명</div>${barList(contactRows, N, { click: fq('contact', contactV) })}</div>
-      <div class="card a-wanna"><h3>워너비 — 그룹</h3><div class="cap">전체 ${N}명 · 멤버 이름만 써도 그 그룹으로 셈 · 여러 개 쓰면 각각 셈</div>${barList(wbTop(wbG).slice(0, 12), N, { long: true })}
-        <h3 style="margin-top:22px">워너비 — 인물</h3><div class="cap">이름이 나온 사람 · 상위 15명</div>${barList(wbTop(wbP).slice(0, 15), N, { long: true })}
-        <div class="note" style="margin-top:10px">특정 아이돌 이름 없음 ${wbNone}명 (빈칸·'그룹이면 좋다' 같은 답 포함)</div></div>
-      <div class="card a-region"><h3>거주 지역</h3><div class="cap">국내 ${dom.length}명 · 주소 기준</div>${barList(regions, dom.length)}</div>
-      ${isAdmin() ? `<div class="card a-heart"><h3>하트 많은 지원자 <span class="note">· 관리자만</span></h3><div class="cap">하트 누른 스태프 ${new Set(Object.values(likes).flatMap(o => Object.keys(o))).size}명 · 누르면 목록에서 보기</div>${barList(valid.filter(a => heartN(a)).sort((x, y) => heartN(y) - heartN(x)).slice(0, 12).map(a => [a.name, heartN(a)]), Math.max(1, new Set(Object.values(likes).flatMap(o => Object.keys(o))).size), { long: true, click: k => k, noPct: true })}</div>` : ''}
+
+    <h3 class="ssec">학교</h3>
+    <div class="srow r21">
+      <div class="card"><div class="schead"><div><h3>재학 학교</h3><div class="cap">재학생 ${enrolled.length}명 · 누르면 목록에서 보기</div></div></div>
+        <div class="school2">${donut(schools, enrolled.length)}<div>${barList(schools, enrolled.length, { long: true, click: schoolQ, max: 8, colors: Object.fromEntries(schools.filter(r => !/미기재/.test(r[0])).slice(0, DONUT_COLORS.length).map((r, i) => [r[0], DONUT_COLORS[i]])) })}</div></div></div>
+      <div class="card"><h3>입학 예정자(중3)의 진학 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ, max: 8 })}</div>
     </div>
-    <div class="card sdaily"><div class="sdh"><div><h3>일별 접수</h3><div class="cap">숨김 제외 ${N}명 · 막대에 마우스를 올리면 날짜·인원</div></div></div>${dailyCols(valid)}</div>
+
+    <h3 class="ssec">지원자 구성</h3>
+    <div class="srow r3">
+      <div class="card"><h3>학년</h3><div class="cap">${N}명</div>${barList(grades, N)}</div>
+      <div class="card"><h3>출생연도</h3><div class="cap">${N}명</div>${barList(years, N)}</div>
+      <div class="card"><h3>거주 지역</h3><div class="cap">${dom.length}명 · 주소 기준</div>${barList(regions, dom.length, { max: 6 })}</div>
+    </div>
+
+    <h3 class="ssec">워너비 <span>멤버 이름만 써도 그 그룹으로 셈 · 여러 개 쓰면 각각 · 아이돌 이름 없는 답 ${wbNone}명</span></h3>
+    <div class="srow r2">
+      <div class="card"><h3>그룹</h3><div class="cap">${N}명 중</div>${barList(wbTop(wbG), N, { long: true, max: 8 })}</div>
+      <div class="card"><h3>인물</h3><div class="cap">${N}명 중</div>${barList(wbTop(wbP), N, { long: true, max: 8 })}</div>
+    </div>
+
+    <h3 class="ssec">진행</h3>
+    <div class="srow r2">
+      <div class="card"><h3>심사 진행</h3><div class="cap">${N}명 · 누르면 그 사람들만 보기</div>${barList(stageRows, N, { click: fq('stage', stageV) })}</div>
+      <div class="card"><h3>연락 상태</h3><div class="cap">${N}명 · 누르면 그 사람들만 보기</div>${barList(contactRows, N, { click: fq('contact', contactV) })}</div>
+    </div>
+
+    <h3 class="ssec">일별 접수</h3>
+    <div class="card sdaily"><div class="cap">막대에 마우스를 올리면 날짜·인원</div>${dailyCols(valid)}</div>
   `;
   ov.querySelector('.sbar .note').textContent = `숨김 제외 ${N}명 · 수집 ${COLLECTED || hhmm()}`;
 }
