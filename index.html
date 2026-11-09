@@ -886,7 +886,7 @@ body.stats-open { overflow: hidden; }
 /* 사진 모아 보기 */
 .gal .gbody { padding: 6px 20px 40px; }
 .gal .sbar h2, .gal .gsz button { white-space: nowrap; }
-.gal .ggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--gsz, 200px), 1fr)); gap: 10px; }
+.gal .ggrid { display: grid; grid-template-columns: repeat(var(--gcols, 10), minmax(0, 1fr)); gap: 8px; }
 /* 얼굴만 쫙: 번호만 보이고, 이름·학교는 마우스를 올리면 */
 .gal .gcard { border: 0; padding: 0; border-radius: 10px; overflow: hidden; cursor: pointer; background: #f1f1f1; box-shadow: 0 1px 2px rgba(0,0,0,.08); display: block; font: inherit; color: inherit; text-align: left; transition: box-shadow .15s, transform .15s; }
 .gal .gcard:hover { box-shadow: 0 8px 20px rgba(0,0,0,.18); transform: translateY(-2px); }
@@ -896,19 +896,19 @@ body.stats-open { overflow: hidden; }
 .gal .gph img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .gal .gph img.cropped { object-fit: fill; }
 .gal .gph .ini { font-size: 40px; }
-.gal .gph .gb { position: absolute; left: 7px; top: 7px; background: rgba(255,255,255,.94); color: #e11d48; box-shadow: inset 0 0 0 1px #e11d48; font-size: 12px; font-weight: 800; line-height: 1; padding: 4px 6px; border-radius: 5px; font-variant-numeric: tabular-nums; }
-.gal .gph .gh { position: absolute; right: 7px; top: 7px; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.92); color: #e11d48; display: grid; place-items: center; }
-.gal .gph .gh .ic { width: 14px; height: 14px; }
-.gal .gtx { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 10px 10px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.72)); opacity: 0; transform: translateY(6px); transition: opacity .15s, transform .15s; min-width: 0; pointer-events: none; }
+.gal .gph .gb { position: absolute; left: 5px; top: 5px; background: rgba(255,255,255,.94); color: #e11d48; box-shadow: inset 0 0 0 1px #e11d48; font-size: 11px; font-weight: 800; line-height: 1; padding: 3px 5px; border-radius: 5px; font-variant-numeric: tabular-nums; }
+.gal .gph .gh { position: absolute; right: 5px; top: 5px; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.92); color: #e11d48; display: grid; place-items: center; }
+.gal .gph .gh .ic { width: 12px; height: 12px; }
+.gal .gtx { position: absolute; left: 0; right: 0; bottom: 0; padding: 24px 8px 8px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.72)); opacity: 0; transform: translateY(6px); transition: opacity .15s, transform .15s; min-width: 0; pointer-events: none; }
 .gal .gcard:hover .gtx, .gal .gcard:focus-visible .gtx { opacity: 1; transform: none; }
-.gal .gtx .gnm { font-size: 14.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gal .gtx .gsc { font-size: 12px; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.gal .gtx .gnm { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gal .gtx .gsc { font-size: 11px; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 .gal .gsz { display: inline-flex; border: 1px solid #d3c9b9; border-radius: 8px; overflow: hidden; }
 .gal .gsz button { border: 0; background: #fff; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; color: var(--ink-2); min-height: 34px; }
 .gal .gsz button.on { background: #141416; color: #fff; font-weight: 700; }
 .topbar #galBtn.on { border-color: #e11d48 !important; color: #e11d48 !important; }
 @media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) {
-  .gal .gbody { padding: 4px 10px 30px; } .gal .sbar .note { display: none; } .gal .gsz button { padding: 6px 10px; } .gal .ggrid { grid-template-columns: repeat(auto-fill, minmax(calc(var(--gsz, 200px) * .6), 1fr)); }
+  .gal .gbody { padding: 4px 10px 30px; } .gal .sbar .note { display: none; } .gal .gsz button { padding: 6px 10px; } .gal .ggrid { grid-template-columns: repeat(var(--gcols-m, 4), minmax(0, 1fr)); }
   .gal .ggrid { gap: 6px; } .gal .gph .gb { font-size: 11px; padding: 3px 5px; }
 }
 .topbar #statsBtn.on { border-color: #fb7185 !important; color: #fb7185 !important; }
@@ -2805,7 +2805,7 @@ function openStats() {
 function closeStats() { const ov = document.getElementById('stats'); if (ov) ov.remove(); document.body.classList.remove('stats-open'); $('#statsBtn').classList.remove('on'); }
 $('#statsBtn').onclick = () => document.getElementById('stats') ? closeStats() : openStats();
 // ===================== 사진 모아 보기 (지금 검색·필터·정렬 그대로, 대표 사진만 크게) =====================
-const GSZ = { '작게': 150, '보통': 210, '크게': 300 };
+const GSZ = { '작게': [14, 5], '보통': [10, 4], '크게': [6, 2] };   // 한 줄에 몇 장 [PC, 휴대폰]
 let galSize = store.get('galSize', '보통');
 function openGal() {
   if (!DATA) return;
@@ -2829,7 +2829,7 @@ function renderGal() {
   const gs = groups(visibleList()), n = gs.reduce((t, g) => t + g.items.length, 0);
   ov.querySelector('.note').textContent = `${n}명 · 지금 검색·필터·정렬 기준`;
   ov.querySelectorAll('[data-gsz]').forEach(b => b.classList.toggle('on', b.dataset.gsz === galSize));
-  ov.style.setProperty('--gsz', GSZ[galSize] + 'px');
+  ov.style.setProperty('--gcols', GSZ[galSize][0]); ov.style.setProperty('--gcols-m', GSZ[galSize][1]);
   const y = ov.scrollTop;
   const all = gs.flatMap(g => g.items);   // 묶음 없이 한 판에 (순서는 지금 정렬 그대로)
   ov.querySelector('.gbody').innerHTML = n ? `
