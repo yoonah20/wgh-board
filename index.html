@@ -2838,8 +2838,8 @@ function renderStats() {
     <h3 class="ssec">학교</h3>
     <div class="srow r21">
       <div class="card"><div class="schead"><div><h3>재학 학교</h3><div class="cap">재학생 ${enrolled.length}명 · 누르면 목록에서 보기</div></div></div>
-        <div class="school2">${donut(schools, enrolled.length)}<div>${barList(schools, enrolled.length, { long: true, click: schoolQ, max: 8, colors: Object.fromEntries(schools.filter(r => !/미기재/.test(r[0])).slice(0, DONUT_COLORS.length).map((r, i) => [r[0], DONUT_COLORS[i]])) })}</div></div></div>
-      <div class="card"><h3>입학 예정자(중3)의 진학 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ, max: 8 })}</div>
+        <div class="school2">${donut(schools, enrolled.length)}<div>${barList(schools, enrolled.length, { long: true, click: schoolQ, max: 10, colors: Object.fromEntries(schools.filter(r => !/미기재/.test(r[0])).slice(0, DONUT_COLORS.length).map((r, i) => [r[0], DONUT_COLORS[i]])) })}</div></div></div>
+      <div class="card"><h3>입학 예정자(중3)의 진학 학교</h3><div class="cap">${incoming.length}명</div>${barList(nextSchools, incoming.length, { long: true, click: schoolQ, max: 10 })}</div>
     </div>
 
     <h3 class="ssec">지원자 구성</h3>
