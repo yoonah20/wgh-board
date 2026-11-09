@@ -3034,18 +3034,41 @@ function thumbTick(addTotal, addDone) {
     setSyncStat(`사진 불러오는 중 ${done}/${total}`);
   }, 120);
 }
+// 새로고침이 빠르게: 지난번에 받은 지원서(이 브라우저에 저장, 로그아웃하면 지움)를 바로 보여 주고, 최신 내용은 뒤에서 받아 바꿔 끼움
+let initCached = false;
 function webLoad(first) {
+  if (first && !initCached) {
+    initCached = true;
+    return idb.get('init').then(c => {
+      if (!c || c.session !== SESSION || !c.d || !c.d.csv) return webLoad(true);
+      try { applyInit(c.d, true); } catch (err) { return webLoad(true); }
+      setSyncStat('최신 지원서 확인 중…');
+      return webLoad(false);
+    });
+  }
   if (first) bootShow();
-  const y = window.scrollY, x = {}; document.querySelectorAll('.pair').forEach(p => { x[p.dataset.key] = p.scrollLeft; });
   if (first) setTimeout(() => bootStep(1, 15), 250);
   return call('getInitial').then(d => {
     if (first) { bootStep(2, 88); }
+    applyInit(d, first);
+    idb.set('init', { session: SESSION, d });
+    if (first) { bootStep(3, 100); bootEnd(); }
+  }).catch(err => {
+    bootEnd();
+    if (needLogin(err)) return showLogin();
+    if (DATA) { setSyncStat('최신 지원서를 받지 못함 — 저장된 내용을 보는 중'); return; }   // 저장본을 보고 있으면 그대로 둠
+    $('#main').innerHTML = `<div class="empty"><h2>지원서를 열 수 없습니다</h2><p>${esc(String(err && err.message || err))}</p>
+      <p class="note">잠시 뒤 오른쪽 위 새로고침 버튼을 눌러 보고, 계속되면 PD에게 알려 주세요.</p></div>`;
+  });
+}
+function applyInit(d, first) {
+    const y = window.scrollY, x = {}; document.querySelectorAll('.pair').forEach(p => { x[p.dataset.key] = p.scrollLeft; });
     VIEWER = d.viewer; document.body.classList.remove('login-mode');
     $('#adminBtn').hidden = !isAdmin();
     $('#groupSel option[value="heartAll"]').hidden = !isAdmin();
     if (groupBy === 'heartAll' && !isAdmin()) groupBy = 'date';
     SUMMARY = d.summary || {};
-    if (first) { WM_TEXT = `${d.viewer} · ${d.now} · 대외비`; }
+    if (first) { const t = new Date(), p2 = n => String(n).padStart(2, '0'); WM_TEXT = `${d.viewer} · ${p2(t.getMonth() + 1)}/${p2(t.getDate())} ${p2(t.getHours())}:${p2(t.getMinutes())} · 대외비`; }   // 저장본을 보여 줄 때도 지금 시각
     updateWatermark();
     syncSnapshot = '';
     load(d.csv, false, d.asOf);
@@ -3053,18 +3076,11 @@ function webLoad(first) {
     prefetchAll();
     if (!first) { window.scrollTo(0, y); document.querySelectorAll('.pair').forEach(p => { if (x[p.dataset.key]) p.scrollLeft = x[p.dataset.key]; }); }
     setSyncStat(collectedText());
-    if (first) { bootStep(3, 100); bootEnd(); }
-  }).catch(err => {
-    bootEnd();
-    if (needLogin(err)) return showLogin();
-    $('#main').innerHTML = `<div class="empty"><h2>지원서를 열 수 없습니다</h2><p>${esc(String(err && err.message || err))}</p>
-      <p class="note">잠시 뒤 오른쪽 위 새로고침 버튼을 눌러 보고, 계속되면 PD에게 알려 주세요.</p></div>`;
-  });
 }
 // ===================== 이메일 인증 로그인 =====================
 let VIEWER = '';
 function showLogin(msg) {
-  SESSION = ''; store.set('session', ''); document.body.classList.add('login-mode');
+  SESSION = ''; store.set('session', ''); idb.clear(); document.body.classList.add('login-mode');   // 로그인이 풀리면 저장해 둔 지원서·사진도 지움
   DATA = null; $('#side').innerHTML = ''; $('#stat').textContent = ''; if (document.getElementById('wmBtn')) $('#wmBtn').hidden = true;
   $('#adminBtn').hidden = true;
   const sync = document.getElementById('syncStat'); if (sync) sync.hidden = true;
