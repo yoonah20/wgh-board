@@ -2687,6 +2687,45 @@ function goHome() {
 }
 $('#appTitle').onclick = goHome;
 $('#appTitle').onkeydown = e => { if (e.key === 'Enter') goHome(); };
+// ===================== 워너비 (자유 서술에서 그룹·인물 이름 찾기) =====================
+// [그룹, 그룹 이름 패턴, [[인물, 패턴], …]] — 멤버 이름만 써도 그 그룹으로 셈. 겹치는 이름(지우·유진 등)은 그룹 이름이 같이 있을 때만
+const WANNABE = [
+  ['블랙핑크', /블랙\s*핑크|블핑|black\s*pink/i, [['제니', /제니|jennie/i], ['리사', /리사|lisa\b/i], ['로제', /로제|ros[eé]\b/i], ['지수', /지수|jisoo/i]]],
+  ['아이브', /아이브|\bIVE\b/, [['장원영', /장원영|원영/], ['안유진', /안유진/], ['리즈', /(?<!시)리즈|\bliz\b/i], ['가을', /가을님|아이브 가을/], ['레이', /아이브 레이/], ['이서', /아이브 이서/]]],
+  ['에스파', /에스파|aespa|aspa/i, [['카리나', /카리나|karina/i], ['닝닝', /닝닝|ningning/i], ['윈터', /윈터|WINTER/], ['지젤', /지젤|giselle/i]]],
+  ['뉴진스', /뉴진스|new\s*jeans/i, [['하니', /뉴진스 하니|하니님/], ['민지', /뉴진스 민지|민지님/], ['해린', /해린/], ['다니엘', /뉴진스 다니엘/], ['혜인', /혜인/]]],
+  ['하츠투하츠', /하츠\s*투\s*하츠|hearts\s*2\s*hearts/i, [['지우', /하츠투하츠[^\n]{0,10}지우/], ['에이나', /에이나/], ['유하', /유하/], ['주은', /주은/], ['카르멘', /카르멘/], ['스텔라', /스텔라/], ['이안', /하츠투하츠[^\n]{0,10}이안|원희\s*,\s*이안|이안\s*(선배|님)/], ['예온', /예온/]]],
+  ['리센느', /리센느|resscenne/i, [['원이', /리센느[^\n]{0,6}원이|원이님/], ['미나미', /미나미/], ['리브', /리센느 리브/], ['메이', /리센느 메이/], ['제나', /리센느 제나/]]],
+  ['엔믹스', /엔믹스|nmixx/i, [['해원', /해원/], ['릴리', /릴리/], ['배이', /배이/], ['설윤', /설윤/], ['규진', /규진/]]],
+  ['(여자)아이들', /\(여자\)\s*아이들|여자\s*아이들|i-?dle|아이들의 (멤버|소연|전소연)|아이들 소연/i, [['전소연', /전소연|소연님/], ['미연', /미연/], ['우기', /우기\s*(선배|님)|아이들[^\n]{0,4}우기/], ['민니', /민니/], ['슈화', /슈화/]]],
+  ['소녀시대', /소녀시대|snsd/i, [['태연', /태연(?!하|히)/], ['윤아', /소녀시대 윤아/]]],
+  ['르세라핌', /르세라핌|le\s*sserafim/i, [['김채원', /김채원|르세라핌[^\n]{0,8}채원/], ['카즈하', /카즈하|kazuha/i], ['허윤진', /허윤진|yunjin/i], ['사쿠라', /사쿠라/], ['홍은채', /홍은채/]]],
+  ['베이비몬스터', /베이비\s*몬스터|babymonster|베몬/i, [['라미', /라미\s*(선배|님)|라미\(|rami\b|베이비\s*몬스터[^\n]{0,6}라미/i], ['아사', /아사\s*(선배|님)|아사-|베이비\s*몬스터[^\n]{0,6}아사/], ['아현', /아현/], ['루카', /루카/], ['파리타', /파리타/], ['치키타', /치키타/], ['로라', /베이비몬스터 로라/]]],
+  ['트와이스', /트와이스|TWICE/, [['지효', /지효/], ['나연', /나연/], ['사나', /트와이스 사나/], ['쯔위', /쯔위/]]],
+  ['이즈나', /이즈나|izna/i, [['최정은', /최정은/]]],
+  ['올데이 프로젝트', /올데이\s*프로젝트|all\s*day\s*project/i, [['베일리', /베일리/], ['타잔', /타잔/], ['영서', /영서/], ['애니', /올데이[^\n]{0,10}애니/]]],
+  ['미야오', /미야오|meovv/i, [['가원', /가원/]]],
+  ['우주소녀', /우주소녀|wjsn/i, [['다영', /다영/]]],
+  ['아일릿', /아일릿|illit/i, [['이로하', /이로하/], ['원희', /원희/], ['모카', /아일릿 모카/]]],
+  ['키스오브라이프', /키스\s*오[브프]\s*라이프|kiss\s*of\s*life|kiof/i, [['벨', /벨님|키스오[브프]라이프[^\n]{0,4}벨/]]],
+  ['레드벨벳', /레드\s*벨벳|red\s*velvet/i, [['슬기', /슬기(?!롭)/], ['아이린', /아이린/], ['웬디', /웬디/], ['조이', /레드벨벳 조이/], ['예리', /예리(?!하|한)/]]],
+  ['키키', /kiiikiii|키키/i, []],
+  ['캣츠아이', /katseye|캣츠아이/i, []],
+  ['블랙스완', /black\s*swan|블랙\s*스완/i, [['파투', /fatou|파투/i]]],
+  ['구구단', /구구단/, [['김세정', /김세정|세정 선배/]]],
+  ['', null, [['아이유', /아이유|\biu\b/i], ['보아', /보아\s*(선배|님)|보아를|보아\s*입니다|\bboa\b|^보아/i], ['권진아', /권진아/], ['크리스탈', /크리스탈/], ['서인영', /서인영/], ['비욘세', /beyonc|비욘세/i], ['두아 리파', /dua\s*lipa|두아\s*리파/i], ['아리아나 그란데', /ariana|아리아나/i], ['바다 리 (댄서)', /bada\s*lee|바다\s*리/i]]],
+];
+function wannabeOf(a) {
+  const e = a.extra.find(x => /워너비/.test(x.h)); const t = norm(e && e.v);
+  const groups = new Set(), people = new Set();
+  if (!t) return { groups, people, blank: true };
+  WANNABE.forEach(([g, gre, mem]) => {
+    let hit = gre ? gre.test(t) : false;
+    mem.forEach(([p, re]) => { if (re.test(t)) { people.add(p); if (g) hit = true; } });
+    if (hit && g) groups.add(g);
+  });
+  return { groups, people, blank: false };
+}
 // ===================== 통계 (숨김 제외) =====================
 const REGIONS = [['서울', /^서울/], ['경기', /^경기|^(수원|성남|고양|용인|부천|안산|안양|남양주|화성|평택|의정부|시흥|파주|김포|광명|광주시|군포|하남|오산|이천|양주|구리|안성|포천|의왕|여주|동두천|과천|가평|양평|연천)/], ['인천', /^인천/], ['부산', /^부산/],
   ['대구', /^대구/], ['광주', /^광주/], ['대전', /^대전/], ['울산', /^울산/], ['세종', /^세종/], ['강원', /^강원|^(춘천|원주|강릉|속초)/], ['충북', /^충(청)?북|^(청주|충주|제천)/],
@@ -2758,6 +2797,10 @@ function renderStats() {
   const stageRows = STAGES.map(t => [t + ' 체크', valid.filter(a => (signs[a.key] || {})[t]).length]);
   const contactRows = [['연락 전', valid.filter(a => !contacts[a.key]).length], ...CONTACTS.map(c => [c, valid.filter(a => contacts[a.key] === c).length])];
   const fq = (kind, v) => k => kind + ':' + v[k];
+  const wb = valid.map(wannabeOf), wbG = {}, wbP = {};
+  wb.forEach(w => { w.groups.forEach(g => wbG[g] = (wbG[g] || 0) + 1); w.people.forEach(p => wbP[p] = (wbP[p] || 0) + 1); });
+  const wbTop = o => Object.entries(o).sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0], 'ko'));
+  const wbNone = wb.filter(w => !w.groups.size && !w.people.size).length;
   const stageV = Object.fromEntries(STAGES.map(t => [t + ' 체크', t])), contactV = { '연락 전': 'none', ...Object.fromEntries(CONTACTS.map(c => [c, c])) };
   ov.querySelector('.sbody').innerHTML = `
     <div class="tiles">
@@ -2774,6 +2817,9 @@ function renderStats() {
         <h3 style="margin-top:22px">출생연도</h3><div class="cap">전체 ${N}명</div>${barList(years, N)}</div>
       <div class="card a-stage"><h3>심사 진행</h3><div class="cap">전체 ${N}명 · 누르면 그 사람들만 목록에서 보기</div>${barList(stageRows, N, { click: fq('stage', stageV) })}
         <h3 style="margin-top:22px">연락 상태</h3><div class="cap">전체 ${N}명</div>${barList(contactRows, N, { click: fq('contact', contactV) })}</div>
+      <div class="card a-wanna"><h3>워너비 — 그룹</h3><div class="cap">전체 ${N}명 · 멤버 이름만 써도 그 그룹으로 셈 · 여러 개 쓰면 각각 셈</div>${barList(wbTop(wbG).slice(0, 12), N, { long: true })}
+        <h3 style="margin-top:22px">워너비 — 인물</h3><div class="cap">이름이 나온 사람 · 상위 15명</div>${barList(wbTop(wbP).slice(0, 15), N, { long: true })}
+        <div class="note" style="margin-top:10px">특정 아이돌 이름 없음 ${wbNone}명 (빈칸·'그룹이면 좋다' 같은 답 포함)</div></div>
       <div class="card a-region"><h3>거주 지역</h3><div class="cap">국내 ${dom.length}명 · 주소 기준</div>${barList(regions, dom.length)}</div>
       ${isAdmin() ? `<div class="card a-heart"><h3>하트 많은 지원자 <span class="note">· 관리자만</span></h3><div class="cap">하트 누른 스태프 ${new Set(Object.values(likes).flatMap(o => Object.keys(o))).size}명 · 누르면 목록에서 보기</div>${barList(valid.filter(a => heartN(a)).sort((x, y) => heartN(y) - heartN(x)).slice(0, 12).map(a => [a.name, heartN(a)]), Math.max(1, new Set(Object.values(likes).flatMap(o => Object.keys(o))).size), { long: true, click: k => k, noPct: true })}</div>` : ''}
     </div>
