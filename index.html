@@ -917,8 +917,13 @@ body.stats-open { overflow: hidden; }
 .gal .gph img.cropped { object-fit: fill; }
 .gal .gph .ini { font-size: 40px; }
 .gal .gph .gb { position: absolute; left: 5px; top: 5px; background: rgba(255,255,255,.94); color: #e11d48; box-shadow: inset 0 0 0 1px #e11d48; font-size: 11px; font-weight: 800; line-height: 1; padding: 3px 5px; border-radius: 5px; font-variant-numeric: tabular-nums; }
-.gal .gph .gh { position: absolute; right: 5px; top: 5px; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.92); color: #e11d48; display: grid; place-items: center; }
-.gal .gph .gh .ic { width: 12px; height: 12px; }
+.gal .gph .gh { position: absolute; right: 5px; top: 5px; width: 28px; height: 28px; border: 0; padding: 0; border-radius: 50%; background: rgba(255,255,255,.92); color: #e11d48; display: grid; place-items: center; cursor: pointer; opacity: 0; transition: opacity .15s, transform .1s; z-index: 1; }
+.gal .gph .gh .ic { width: 14px; height: 14px; }
+.gal .gph .gh:hover { transform: scale(1.12); } .gal .gph .gh:focus-visible { opacity: 1; outline: 2px solid #e11d48; }
+.gal .gcard:hover .gh, .gal .gcard.liked .gh { opacity: 1; }   /* 하트: 누른 건 늘 보이고, 안 누른 건 마우스를 올리면 */
+.gal .ggrid.dimrest .gcard:not(.liked) .gph > img, .gal .ggrid.dimrest .gcard:not(.liked) .gph > .ini { opacity: .45; filter: saturate(.6); transition: opacity .15s, filter .15s; }
+.gal .ggrid.dimrest .gcard:not(.liked):hover .gph > img { opacity: 1; filter: none; }
+@media (hover: none) { .gal .gph .gh { opacity: .85; } }   /* 휴대폰: 하트 버튼 늘 보이게 */
 .gal .gtx { position: absolute; left: 0; right: 0; bottom: 0; padding: 24px 8px 8px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.72)); opacity: 0; transform: translateY(6px); transition: opacity .15s, transform .15s; min-width: 0; pointer-events: none; }
 .gal .gcard:hover .gtx, .gal .gcard:focus-visible .gtx { opacity: 1; transform: none; }
 .gal .gtx .gnm { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2904,8 +2909,11 @@ function openGal() {
     ov.addEventListener('click', e => {
       if (e.target.closest('[data-gclose]')) { closeGal(); return; }
       const z = e.target.closest('[data-gsz]'); if (z) { galSize = z.dataset.gsz; store.set('galSize', galSize); renderGal(); return; }
+      const hb = e.target.closest('[data-gheart]');
+      if (hb) { e.stopPropagation(); toggleHeart(hb.closest('[data-gkey]').dataset.gkey); renderGal(); return; }
       const c = e.target.closest('[data-gkey]'); if (c) goToApplicant(c.dataset.gkey);
     });
+    ov.addEventListener('keydown', e => { const c = e.target.closest && e.target.closest('.gcard'); if (c && e.target === c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); goToApplicant(c.dataset.gkey); } });
   }
   document.body.classList.add('stats-open'); $('#galBtn').classList.add('on');
   renderGal();
@@ -2918,13 +2926,14 @@ function renderGal() {
   ov.style.setProperty('--gcols', GSZ[galSize][0]); ov.style.setProperty('--gcols-m', GSZ[galSize][1]);
   const y = ov.scrollTop;
   const all = gs.flatMap(g => g.items);   // 묶음 없이 한 판에 (순서는 지금 정렬 그대로)
+  const anyLike = all.some(myLike);   // 하트를 하나라도 눌렀으면, 안 누른 사진은 연하게
   ov.querySelector('.gbody').innerHTML = n ? `
-    <div class="ggrid">${all.map(a => `
-      <button class="gcard ${isHidden(a) ? 'hidden-row' : ''}" data-gkey="${esc(a.key)}" aria-label="${esc(a.name)} 지원서 보기">
+    <div class="ggrid ${anyLike ? 'dimrest' : ''}">${all.map(a => `
+      <div class="gcard ${isHidden(a) ? 'hidden-row' : ''} ${myLike(a) ? 'liked' : ''}" data-gkey="${esc(a.key)}" role="button" tabindex="0" aria-label="${esc(a.name)} 지원서 보기">
         <div class="gph">${repImg(a) || `<div class="ini">${esc((norm(a.name).match(/[가-힣A-Za-z]/) || ['?'])[0].toUpperCase())}<small>사진 없음</small></div>`}
-          <span class="gb">${a.appNo != null ? '#' + esc(String(a.appNo)) : '번호 전'}</span>${myLike(a) ? `<span class="gh">${ic('heart', 'fill')}</span>` : ''}
+          <span class="gb">${a.appNo != null ? '#' + esc(String(a.appNo)) : '번호 전'}</span><button class="gh" data-gheart aria-label="${myLike(a) ? '하트 빼기' : '하트'}" aria-pressed="${myLike(a)}">${ic('heart', myLike(a) ? 'fill' : '')}</button>
           <div class="gtx"><div class="gnm">${esc(a.name) || '(이름 없음)'}</div><div class="gsc">${esc(sideSchool(a)) || '학교 미기재'}</div><div class="gsc">${esc([gradeChip(a), a.dept, a.b ? String(a.b.y).slice(2) + '년생' : ''].filter(Boolean).join(' · '))}</div></div></div>
-      </button>`).join('')}</div>` : '<div class="note" style="padding:20px">조건에 맞는 지원자가 없습니다.</div>';
+      </div>`).join('')}</div>` : '<div class="note" style="padding:20px">조건에 맞는 지원자가 없습니다.</div>';
   ov.scrollTop = y;
   hydrateThumbs(); requestAnimationFrame(() => fitCrops(ov));
 }
@@ -3080,7 +3089,7 @@ function applyInit(d, first) {
 }
 // 로그아웃: 서버 세션을 끊고, 이 브라우저에 저장된 지원서·사진·심사 기록 사본을 모두 지움
 function doLogout() {
-  if (!confirm('로그아웃할까요?\n이 브라우저에 저장된 지원서와 사진도 함께 지워집니다.')) return;
+  if (!confirm('로그아웃할까요?')) return;
   const s = SESSION;
   Object.keys(localStorage).filter(k => k.startsWith('audition:') && !/^audition:(loginEmail|theme|groupBy|galSize|viewerZoom)$/.test(k)).forEach(k => localStorage.removeItem(k));
   if (s) gs('logout', s).catch(() => {});
