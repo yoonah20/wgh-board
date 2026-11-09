@@ -883,6 +883,32 @@ html .topbar #groupSel { background-image: url("data:image/svg+xml;utf8,<svg xml
 .cols-x { display: flex; gap: 2px; font-size: 11px; color: var(--ink-2); margin-top: 4px; }
 .cols-x span { flex: 1; min-width: 3px; text-align: center; white-space: nowrap; overflow: visible; }
 body.stats-open { overflow: hidden; }
+/* 사진 모아 보기 */
+.gal .gbody { padding: 6px 20px 40px; }
+.gal .sbar h2, .gal .gsz button { white-space: nowrap; }
+.gal .ggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--gsz, 200px), 1fr)); gap: 14px; }
+.gal .gcard { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.06); cursor: pointer; border: 0; padding: 0; text-align: left; font: inherit; color: inherit; display: flex; flex-direction: column; transition: box-shadow .15s, transform .15s; }
+.gal .gcard:hover { box-shadow: 0 6px 18px rgba(0,0,0,.14); transform: translateY(-2px); }
+.gal .gcard:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; }
+.gal .gcard.hidden-row { opacity: .5; }
+.gal .gph { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: #f1f1f1; }
+.gal .gph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gal .gph img.cropped { object-fit: fill; }
+.gal .gph .ini { font-size: 40px; }
+.gal .gph .gn { position: absolute; right: 8px; bottom: 8px; background: rgba(20,20,22,.7); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; }
+.gal .gph .gh { position: absolute; left: 8px; top: 8px; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.92); color: #e11d48; display: grid; place-items: center; }
+.gal .gph .gh .ic { width: 14px; height: 14px; }
+.gal .gtx { padding: 9px 11px 11px; min-width: 0; }
+.gal .gtx .gnm { font-size: 14.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gal .gtx .gsc { font-size: 12px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.gal .gsz { display: inline-flex; border: 1px solid #d3c9b9; border-radius: 8px; overflow: hidden; }
+.gal .gsz button { border: 0; background: #fff; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; color: var(--ink-2); min-height: 34px; }
+.gal .gsz button.on { background: #141416; color: #fff; font-weight: 700; }
+.topbar #galBtn.on { border-color: #e11d48 !important; color: #e11d48 !important; }
+@media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) {
+  .gal .gbody { padding: 4px 10px 30px; } .gal .sbar .note { display: none; } .gal .gsz button { padding: 6px 10px; } .gal .ggrid { gap: 8px; grid-template-columns: repeat(auto-fill, minmax(calc(var(--gsz, 200px) * .6), 1fr)); }
+  .gal .gtx { padding: 7px 8px 9px; } .gal .gtx .gnm { font-size: 13.5px; }
+}
 .topbar #statsBtn.on { border-color: #fb7185 !important; color: #fb7185 !important; }
 @media screen and (max-width: 760px), screen and (max-height: 500px) and (pointer: coarse) {
   .stats .sgrid { grid-template-columns: minmax(0, 1fr); padding: 4px 10px 30px; gap: 10px; }
@@ -912,6 +938,7 @@ body.stats-open { overflow: hidden; }
     <option value="heartAll" hidden>하트 집계 (관리자)</option>
   </select>
   <button class="btn" id="statsBtn" title="지원자 통계 (숨김 제외)">통계</button>
+  <button class="btn" id="galBtn" title="대표 사진만 크게 모아 보기 (지금 검색·필터·정렬 그대로)">사진</button>
   </div>
   <div class="tb-right">
   <span class="stat sync" id="syncStat" hidden></span>
@@ -2081,6 +2108,7 @@ function render() {
   const gs = groups(visibleList());
   renderStat(); renderSide(gs); renderMain(gs); hydrateThumbs();
   if (document.getElementById('stats')) renderStats();
+  if (document.getElementById('gal')) renderGal();
 }
 
 // ===================== 불러오기 화면 =====================
@@ -2647,7 +2675,7 @@ document.addEventListener('keydown', e => {
 // 열려 있는 창을 모두 닫고, 검색·필터를 비우고, 맨 위로 (정렬 방식은 그대로)
 function goHome() {
   if (!DATA) return;
-  closeViewer(); closeStats(); if (phState) closePhoto(); if (!$('#vidModal').hidden) closeVideo();
+  closeViewer(); closeStats(); closeGal(); if (phState) closePhoto(); if (!$('#vidModal').hidden) closeVideo();
   ['#logModal', '#cropModal'].forEach(id => { const m = $(id); if (m && !m.hidden) m.hidden = true; });
   hideHLTool(); closeMenu(); const f = $('#filters'); if (f) f.open = false;
   if (document.body.classList.contains('m-detail')) { document.body.classList.remove('m-detail'); if (history.state && history.state.m) history.replaceState(null, ''); }
@@ -2769,11 +2797,59 @@ function openStats() {
       }
     });
   }
-  document.body.classList.add('stats-open'); $('#statsBtn').classList.add('on');
+  closeGal(); document.body.classList.add('stats-open'); $('#statsBtn').classList.add('on');
   renderStats();
 }
 function closeStats() { const ov = document.getElementById('stats'); if (ov) ov.remove(); document.body.classList.remove('stats-open'); $('#statsBtn').classList.remove('on'); }
 $('#statsBtn').onclick = () => document.getElementById('stats') ? closeStats() : openStats();
+// ===================== 사진 모아 보기 (지금 검색·필터·정렬 그대로, 대표 사진만 크게) =====================
+const GSZ = { '작게': 150, '보통': 210, '크게': 300 };
+let galSize = store.get('galSize', '보통');
+function openGal() {
+  if (!DATA) return;
+  closeStats();
+  let ov = document.getElementById('gal');
+  if (!ov) {
+    ov = document.createElement('div'); ov.id = 'gal'; ov.className = 'stats gal';
+    ov.innerHTML = `<div class="sbar"><h2>사진 모아 보기</h2><span class="note"></span><span class="spacer"></span><span class="gsz" role="group" aria-label="사진 크기">${Object.keys(GSZ).map(k => `<button data-gsz="${k}">${k}</button>`).join('')}</span><button class="btn" data-gclose>닫기 ${ic('x')}</button></div><div class="gbody"></div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => {
+      if (e.target.closest('[data-gclose]')) { closeGal(); return; }
+      const z = e.target.closest('[data-gsz]'); if (z) { galSize = z.dataset.gsz; store.set('galSize', galSize); renderGal(); return; }
+      const c = e.target.closest('[data-gkey]'); if (c) goToApplicant(c.dataset.gkey);
+    });
+  }
+  document.body.classList.add('stats-open'); $('#galBtn').classList.add('on');
+  renderGal();
+}
+function renderGal() {
+  const ov = document.getElementById('gal'); if (!ov) return;
+  const gs = groups(visibleList()), n = gs.reduce((t, g) => t + g.items.length, 0);
+  ov.querySelector('.note').textContent = `${n}명 · 지금 검색·필터·정렬 기준`;
+  ov.querySelectorAll('[data-gsz]').forEach(b => b.classList.toggle('on', b.dataset.gsz === galSize));
+  ov.style.setProperty('--gsz', GSZ[galSize] + 'px');
+  const y = ov.scrollTop;
+  const all = gs.flatMap(g => g.items);   // 묶음 없이 한 판에 (순서는 지금 정렬 그대로)
+  ov.querySelector('.gbody').innerHTML = n ? `
+    <div class="ggrid">${all.map(a => { const np = a.files.filter(f => f.kind === 'photo').length; return `
+      <button class="gcard ${isHidden(a) ? 'hidden-row' : ''}" data-gkey="${esc(a.key)}" aria-label="${esc(a.name)} 지원서 보기">
+        <div class="gph">${repImg(a) || `<div class="ini">${esc((norm(a.name).match(/[가-힣A-Za-z]/) || ['?'])[0].toUpperCase())}<small>사진 없음</small></div>`}
+          ${myLike(a) ? `<span class="gh">${ic('heart', 'fill')}</span>` : ''}${np > 1 ? `<span class="gn">사진 ${np}</span>` : ''}</div>
+        <div class="gtx"><div class="gnm">${bibTag(a)}${esc(a.name) || '(이름 없음)'}</div><div class="gsc">${esc(sideSchool(a)) || '학교 미기재'}${a.dept ? ' · ' + esc(a.dept) : ''}</div></div>
+      </button>`; }).join('')}</div>` : '<div class="note" style="padding:20px">조건에 맞는 지원자가 없습니다.</div>';
+  ov.scrollTop = y;
+  hydrateThumbs(); requestAnimationFrame(() => fitCrops(ov));
+}
+function closeGal() { const ov = document.getElementById('gal'); if (ov) ov.remove(); if (!document.getElementById('stats')) document.body.classList.remove('stats-open'); $('#galBtn').classList.remove('on'); }
+// 사진을 누르면 모아 보기를 닫고 그 지원자의 지원서로
+function goToApplicant(key) {
+  closeGal();
+  if (isMobile()) { openMobile(key); return; }
+  const it = document.querySelector(`#side .item[data-key="${CSS.escape(key)}"]`);
+  if (it) { it.scrollIntoView({ block: 'center' }); it.click(); }
+}
+$('#galBtn').onclick = () => document.getElementById('gal') ? closeGal() : openGal();
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('gal')) closeGal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('stats')) closeStats(); });
 // 숨김·승인 동작 (지원서 안 버튼과 사이드바 ⋯ 메뉴가 같이 씀)
 function applyAct(key, act) {
