@@ -919,7 +919,14 @@ body.stats-open { overflow: hidden; }
 .gal .gph .gb { position: absolute; left: 5px; top: 5px; background: rgba(255,255,255,.94); color: #e11d48; box-shadow: inset 0 0 0 1px #e11d48; font-size: 11px; font-weight: 800; line-height: 1; padding: 3px 5px; border-radius: 5px; font-variant-numeric: tabular-nums; }
 .gal .gph .gh { position: absolute; right: 5px; top: 5px; width: 28px; height: 28px; border: 0; padding: 0; border-radius: 50%; background: rgba(255,255,255,.92); color: #e11d48; display: grid; place-items: center; cursor: pointer; opacity: 0; transition: opacity .15s, transform .1s; z-index: 1; }
 .gal .gph .gh .ic { width: 14px; height: 14px; }
-.gal .gph .gh:hover { transform: scale(1.12); } .gal .gph .gh:focus-visible { opacity: 1; outline: 2px solid #e11d48; }
+.gal .gph .gh:hover { transform: scale(1.12); }
+/* 크기별로 번호표·하트 크기 맞춤 (작게일수록 작게) */
+.gal[data-size="작게"] .gph .gb { font-size: 9px; padding: 2px 3px; left: 4px; top: 4px; border-radius: 4px; }
+.gal[data-size="작게"] .gph .gh { width: 20px; height: 20px; right: 4px; top: 4px; } .gal[data-size="작게"] .gph .gh .ic { width: 11px; height: 11px; }
+.gal[data-size="보통"] .gph .gb { font-size: 10px; padding: 2px 4px; }
+.gal[data-size="보통"] .gph .gh { width: 24px; height: 24px; } .gal[data-size="보통"] .gph .gh .ic { width: 12px; height: 12px; }
+.gal[data-size="크게"] .gph .gb { font-size: 12px; padding: 4px 6px; left: 7px; top: 7px; }
+.gal[data-size="크게"] .gph .gh { width: 30px; height: 30px; right: 7px; top: 7px; } .gal[data-size="크게"] .gph .gh .ic { width: 15px; height: 15px; } .gal .gph .gh:focus-visible { opacity: 1; outline: 2px solid #e11d48; }
 .gal .gcard:hover .gh, .gal .gcard.liked .gh { opacity: 1; }   /* 하트: 누른 건 늘 보이고, 안 누른 건 마우스를 올리면 */
 .gal .ggrid.dimrest .gcard:not(.liked) .gph > img, .gal .ggrid.dimrest .gcard:not(.liked) .gph > .ini { opacity: .45; filter: saturate(.6); transition: opacity .15s, filter .15s; }
 .gal .ggrid.dimrest .gcard:not(.liked):hover .gph > img { opacity: 1; filter: none; }
@@ -2923,7 +2930,7 @@ function renderGal() {
   const gs = groups(visibleList()), n = gs.reduce((t, g) => t + g.items.length, 0);
   ov.querySelector('.note').textContent = `${n}명 · 지금 검색·필터·정렬 기준`;
   ov.querySelectorAll('[data-gsz]').forEach(b => b.classList.toggle('on', b.dataset.gsz === galSize));
-  ov.style.setProperty('--gcols', GSZ[galSize][0]); ov.style.setProperty('--gcols-m', GSZ[galSize][1]);
+  ov.dataset.size = galSize; ov.style.setProperty('--gcols', GSZ[galSize][0]); ov.style.setProperty('--gcols-m', GSZ[galSize][1]);
   const y = ov.scrollTop;
   const all = gs.flatMap(g => g.items);   // 묶음 없이 한 판에 (순서는 지금 정렬 그대로)
   const anyLike = all.some(myLike);   // 하트를 하나라도 눌렀으면, 안 누른 사진은 연하게
