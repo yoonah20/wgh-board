@@ -2855,16 +2855,16 @@ function renderStats() {
       <div class="card"><h3>거주 지역</h3><div class="cap">${dom.length}명 · 주소 기준</div>${barList(regions, dom.length, { max: 6 })}</div>
     </div>
 
-    <h3 class="ssec">워너비 <span>멤버 이름만 써도 그 그룹으로 셈 · 여러 개 쓰면 각각 · 아이돌 이름 없는 답 ${wbNone}명</span></h3>
-    <div class="srow r2">
-      <div class="card"><h3>그룹</h3><div class="cap">${N}명 중</div>${barList(wbTop(wbG), N, { long: true, max: 8 })}</div>
-      <div class="card"><h3>인물</h3><div class="cap">${N}명 중</div>${barList(wbTop(wbP), N, { long: true, max: 8 })}</div>
-    </div>
-
     <h3 class="ssec">진행</h3>
     <div class="srow r2">
       <div class="card"><h3>심사 진행</h3><div class="cap">${N}명 · 누르면 그 사람들만 보기</div>${barList(stageRows, N, { click: fq('stage', stageV) })}</div>
       <div class="card"><h3>연락 상태</h3><div class="cap">${N}명 · 누르면 그 사람들만 보기</div>${barList(contactRows, N, { click: fq('contact', contactV) })}</div>
+    </div>
+
+    <h3 class="ssec">워너비 <span>멤버 이름만 써도 그 그룹으로 셈 · 여러 개 쓰면 각각 · 아이돌 이름 없는 답 ${wbNone}명</span></h3>
+    <div class="srow r2">
+      <div class="card"><h3>그룹</h3><div class="cap">${N}명 중</div>${barList(wbTop(wbG), N, { long: true, max: 8 })}</div>
+      <div class="card"><h3>인물</h3><div class="cap">${N}명 중</div>${barList(wbTop(wbP), N, { long: true, max: 8 })}</div>
     </div>
 
     <h3 class="ssec">일별 접수</h3>
