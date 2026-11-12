@@ -1052,7 +1052,7 @@ html .menu { background: var(--st-surface) !important; border-color: var(--st-li
       <label class="chk"><input type="checkbox" id="showHidden"> 숨김 포함</label>
       <label class="chk"><input type="checkbox" id="onlyWarn"> 검토 필요만</label>
       <label class="chk fsel">심사 <select id="stageF"><option value="">전체</option><option value="1차">1차 체크</option><option value="2차">2차 체크</option><option value="최종">최종 체크</option><option value="none">체크 없음</option></select></label>
-      <label class="chk fsel">연락 <select id="contactF"><option value="">전체</option><option value="none">연락 전</option><option value="연락함">연락함</option><option value="연락 보류">연락 보류</option><option value="부재">부재</option><option value="고사">고사</option></select></label>
+      <label class="chk fsel">연락 <select id="contactF"><option value="">전체</option><option value="none">연락 전</option><option value="연락 완료">연락 완료</option><option value="예선 참여">예선 참여</option><option value="예선 불참">예선 불참</option><option value="고사">고사</option></select></label>
     </div>
   </details>
   <button class="btn" id="adminBtn" hidden title="관리자 메뉴">관리자</button>
@@ -1197,8 +1197,9 @@ let hls = store.get('hls', {});               // key -> [{f, s, e, c}] 내 형�
 let contacts = store.get('contacts', {});     // key -> '연락함' | '연락 보류' | '부재' | '연락 완료' | '고사' (없으면 연락 전)
 let crops = store.get('crops', {});           // key -> { id, cx, cy, w, ar } 대표 사진 3:4 자르기 (이미지 비율 기준)
 const STAGES = ['1차', '2차', '최종'];
-const CONTACTS = ['연락함', '연락 보류', '부재', '고사'];
-const ctCls = c => 'ct' + ['연락함', '부재', '연락 완료', '고사', '연락 보류'].indexOf(c);   // 색 클래스는 값에 고정 (순서 바뀌어도 색 유지)
+const CONTACTS = ['연락 완료', '예선 참여', '예선 불참', '고사'];
+const CT_COLOR = { '예선 참여': 0, '예선 불참': 1, '연락 완료': 2, '고사': 3, '연락 보류': 4, '연락함': 2, '부재': 1 };
+const ctCls = c => 'ct' + (c in CT_COLOR ? CT_COLOR[c] : 3);   // 색은 값에 고정
 
 // ===================== 심사 기록 공유 (Apps Script 웹 앱) =====================
 // 배포본에만 window.WGH_SYNC = { url, token }을 넣음. 없으면 이 브라우저에만 저장.
