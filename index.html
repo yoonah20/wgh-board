@@ -1169,7 +1169,8 @@ function setSyncStat(text, err) {
 }
 // 상단바 오른쪽: 시트에서 마지막으로 데이터를 수집한 날짜·시각
 let COLLECTED = '';
-const collectedText = () => COLLECTED ? `수집 ${COLLECTED}` : `저장됨 · ${hhmm()}`;
+let newNote = { text: '', until: 0 };   // '새 지원서 n건 반영' 안내 (1분 동안)
+const collectedText = () => (Date.now() < newNote.until ? newNote.text + ' · ' : '') + (COLLECTED ? `수집 ${COLLECTED}` : `저장됨 · ${hhmm()}`);
 const hhmm = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 function saveLocal() {
   store.set('memos', memos); store.set('reviews', reviews); store.set('overrides', overrides);
@@ -3091,7 +3092,15 @@ function webLoad(first) {
       <p class="note">잠시 뒤 오른쪽 위 새로고침 버튼을 눌러 보고, 계속되면 PD에게 알려 주세요.</p></div>`;
   });
 }
+let lastCsv = '', lastSum = '', lastFetch = 0;
 function applyInit(d, first) {
+    lastFetch = Date.now();
+    const sum = JSON.stringify(d.summary || {});
+    if (!first && DATA && d.csv === lastCsv && sum === lastSum) {   // 지원서가 그대로면 화면을 다시 그리지 않음 (심사 기록만 맞춤)
+      applyRows(d.state || [], true); setAppTitle(d.asOf); return;
+    }
+    const before = DATA ? new Set(DATA.list.map(a => a.key)) : null;
+    lastCsv = d.csv; lastSum = sum;
     const y = window.scrollY, x = {}; document.querySelectorAll('.pair').forEach(p => { x[p.dataset.key] = p.scrollLeft; });
     VIEWER = d.viewer; document.body.classList.remove('login-mode');
     $('#adminBtn').hidden = !isAdmin(); $('#logoutBtn').hidden = isAdmin();   // 관리자는 관리자 메뉴 안에
@@ -3106,6 +3115,8 @@ function applyInit(d, first) {
     prefetchAll();
     if (!first) { window.scrollTo(0, y); document.querySelectorAll('.pair').forEach(p => { if (x[p.dataset.key]) p.scrollLeft = x[p.dataset.key]; }); }
     setSyncStat(collectedText());
+    const added = before ? DATA.list.filter(a => !before.has(a.key) && !isHidden(a)).length : 0;
+    if (added) { newNote = { text: `새 지원서 ${added}건 반영`, until: Date.now() + 60000 }; setSyncStat(collectedText()); clearTimeout(applyInit.t); applyInit.t = setTimeout(() => setSyncStat(collectedText()), 60500); }
 }
 // 로그아웃: 서버 세션을 끊고, 이 브라우저에 저장된 지원서·사진·심사 기록 사본을 모두 지움
 function doLogout() {
@@ -3162,11 +3173,14 @@ function showLogin(msg) {
 if (WEB) {
   SESSION = store.get('session', '');
   if (SESSION) webLoad(true); else showLogin();
-  // 10분마다 시트를 다시 수집 (새 지원자 반영). 메모 입력 중이거나 창이 안 보이면 건너뜀
-  setInterval(() => {
+  // 2분마다(창을 다시 볼 때도) 최신 지원서 확인. 바뀐 게 없으면 화면은 그대로, 새 지원서가 있을 때만 다시 그림
+  // 메모 입력 중·사진 자르기·크게 보기 중이거나 창이 안 보이면 건너뜀
+  const autoFetch = () => {
     const typing = document.activeElement && document.activeElement.matches && document.activeElement.matches('textarea, input');
-    if (SESSION && !document.hidden && !typing && $('#cropModal').hidden && !viewerKey) webLoad(false);
-  }, 10 * 60 * 1000);
+    if (SESSION && DATA && !document.hidden && !typing && $('#cropModal').hidden && !viewerKey) webLoad(false);
+  };
+  setInterval(autoFetch, 2 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastFetch > 60 * 1000) autoFetch(); });
   // 관리자 메뉴: 워터마크 켜기/끄기, 활동 기록
   $('#adminBtn').onclick = e => {
     e.stopPropagation();
