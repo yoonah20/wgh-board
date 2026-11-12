@@ -2680,7 +2680,10 @@ let phX = null;
 $('#phImg').addEventListener('touchstart', e => { phX = e.touches[0].clientX; }, { passive: true });
 $('#phImg').addEventListener('touchend', e => { if (phX == null) return; const dx = e.changedTouches[0].clientX - phX; phX = null; if (Math.abs(dx) > 50) stepPhoto(dx < 0 ? 1 : -1); });
 // ===================== 영상 바로 재생 (드라이브 미리보기) =====================
+// 휴대폰·태블릿 브라우저는 다른 사이트 안에 끼운 드라이브 화면에 구글 로그인을 넘기지 않아 재생이 막힘 → 새 탭에서 드라이브 재생 화면을 직접 엶
+const TOUCH_Q = matchMedia('(hover: none) and (pointer: coarse)');
 function openVideo(id, cap, key) {
+  if (isMobile() || TOUCH_Q.matches) { window.open(`https://drive.google.com/file/d/${encodeURIComponent(id)}/preview`, '_blank', 'noopener'); return; }
   const a = DATA && DATA.list.find(x => x.key === key);
   $('#vTitle').textContent = [a && a.name, cap].filter(Boolean).join(' · ');
   $('#vOpen').href = viewUrl(id);
