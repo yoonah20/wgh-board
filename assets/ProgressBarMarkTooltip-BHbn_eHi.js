@@ -1,0 +1,1 @@
+import{Tooltip as t}from"./Tooltip-ChNabpPr.js";import{j as e}from"./index-CvFfQNrV.js";function i({content:o,children:r}){return e.jsx(t,{content:o,placement:"above",focusTrigger:"always",children:r})}export{i as default};
